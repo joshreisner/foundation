@@ -25,8 +25,8 @@ class config {
 		'db.host'			=> 'localhost',
 		'db.meta_table'		=> 'meta',
 		'db.mysql_engine'	=> 'MyISAM',
-		'db.user'			=> 'root',
 		'db.password'		=> '',
+		'db.user'			=> 'root',
 		'js.shortcuts'		=> array(
 									'jquery'=>'//code.jquery.com/jquery-latest.js', 
 									'bootstrap'=>'//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js'
@@ -43,7 +43,11 @@ class config {
 	}
 	
 	static function set($key, $value) {
-		self::$defaults[$key] = $value;
+		if (is_array($key)) {
+			self::$defaults = array_merge($key, self::$defaults);
+		} else {
+			self::$defaults[$key] = $value;
+		}
 	}
 	
 }

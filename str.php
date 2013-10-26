@@ -69,16 +69,16 @@ class str {
 	  * Sanitze a string for database or urls
 	  * Todo: check if this is utf8 compatible
 	  *
-	  * @param	string	$haystack	The string to search in
-	  * @param	string	$needle		The string to search for
-	  * @return	mixed				If match found, returns remainder of string.  Otherwise false
+	  * @param	string	$string 	The string to operate on
+	  * @param	string	$delimiter	replace-spaces-with-this-string
+	  * @return	string				Returns sanitized string
 	  */
-	static function sanitize($string, $replace_spaces_with='_') {
-		$string = trim(str_replace(' ', $replace_spaces_with, $string));
-		
-		//make multi-spaces into singles
-		$double = $replace_spaces_with . $replace_spaces_with;
-		while (stristr($string, $double)) str_replace($double, $replace_spaces_with, $string);
+	static function sanitize($string, $delimiter='-') {
+
+		$string = iconv('UTF-8', 'ASCII//TRANSLIT', $string);
+		$string = preg_replace("/[^a-zA-Z0-9\/_|+ -]/", '', $string);
+		$string = strtolower(trim($string, '-'));
+		$string = preg_replace("/[\/_|+ -]+/", $delimiter, $string);
 
 		return $string;
 	}

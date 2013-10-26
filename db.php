@@ -93,7 +93,6 @@ class db {
 	public function order_by($columns) {
 		if (empty(self::$table)) trigger_error('db::order_by() must come after a db::table() statement');
 		$columns = a::separated($columns);
-		//sanitize columns?
 		self::$order_by = $columns;
 		return $this;
 	}
@@ -144,7 +143,7 @@ class db {
 	  */
     public static function table($table) {
 		self::$wheres = self::$joins  = self::$order_by = array(); //clear out old queries
-		self::$table = str::sanitize($table);
+		self::$table = $table;
 		return new self;
     }
 	/**
