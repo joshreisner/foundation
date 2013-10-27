@@ -49,6 +49,16 @@ class db {
 	}
 
 	/**
+	  * Get the charset
+	  * MySQL needs a slightly different format than HTML
+	  * Don't expect I will try it with charsets other than utf-8
+	  * 
+	  */
+	private static function charset() {
+		return str_replace('-', '', config::get('charset'));
+	}
+
+	/**
 	  * Connect to the database
 	  * Sets the local cache variable $connection to a database resource handle or throws and error
 	  * 
@@ -63,7 +73,7 @@ class db {
 				config::get('db.password'), 
 				array(
 					PDO::ATTR_ERRMODE				=>PDO::ERRMODE_SILENT,
-					PDO::MYSQL_ATTR_INIT_COMMAND	=>'SET NAMES utf8',
+					PDO::MYSQL_ATTR_INIT_COMMAND	=>'SET NAMES ' . self::charset(),
 					PDO::ATTR_PERSISTENT			=>true,
 				)
 			);			
@@ -95,6 +105,28 @@ class db {
 		$result = self::select($selects);
 		if (count($result)) return array_shift($result);
 		return $result;
+	}
+
+	/**
+	  * SQL Insert
+	  *
+	  * @param	string	$selects	Any amount of column names
+	  * @return	mixed				Returns an object-resultset or null
+	  */
+	function insert($inserts) {
+		if (empty(self::$table)) trigger_error('db::insert() must come after a db::table() statement');
+
+		$fields = $values = array();
+    	foreach ($inserts as $field=>$value) {
+    		$fields[] = $field;
+    		if (is_numeric($value) || $value == 'NOW()' || $value == 'NULL') {
+    			$values[] = $value;
+    		} else {
+    			$values[] = '\'' . str::escape($value) . '\'';
+    		}
+    	}
+    	$sql = 'INSERT INTO ' . self::$table . ' ( ' . implode(', ', $fields) . ' ) VALUES ( ' . implode(',', $values) . ')';
+		if (self::query($sql)) return self::$connection->lastInsertId();
 	}
 
 	/**

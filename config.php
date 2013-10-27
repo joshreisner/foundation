@@ -26,11 +26,12 @@ class config {
 		'error.display'		=> false,
 		'error.email'		=> false,
 		'error.log'			=> false,
+		'form.save'			=> 'Save Changes',
 		'js.shortcuts'		=> array('jquery'=>'//code.jquery.com/jquery-latest.js', 'bootstrap'=>'//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js'),
 		'language'			=> 'en',
 		'session.user_id'	=> 'user_id',
-		'time.format'		=> '%l:%M%p',
-		'timezone'			=> 'America/New_York',
+		'time.format'		=> '%l:%M %p',
+		'time.zone'			=> 'America/New_York',
 		'viewport'			=> 'width=device-width, initial-scale=1.0',
 	);
 	

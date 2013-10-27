@@ -52,7 +52,9 @@ class http {
 	  * @param  mixed   $default 	Optional default in case not found (only applies to single $key)
 	  * @return	boolean	or string
 	  */
-	static function get($keys, $default=null) {
+	static function get($keys=false, $default=null) {
+		if (!$keys) return (!empty($_GET));
+
 		$keys = a::arguments($keys);
 
 		if (count($keys) == 1) return a::get($_GET, $keys[0], $default);
@@ -62,15 +64,6 @@ class http {
 		}
 
 		return true;
-	}
-
-	/**
-	  * Convenience function for sites that use mod_rewrite to detect whether current page is the home page (usually located at /)
-	  *
-	  * @param	string	$path	The location of the home page
-	  */
-	static function home($path='/') {
-		return (self::request('path') == $path);
 	}
 
 	/**
@@ -89,6 +82,15 @@ class http {
         exit;
     }
 	
+	/**
+	  * Convenience function for sites that use mod_rewrite to detect whether current page is the home page (usually located at /)
+	  *
+	  * @param	string	$path	The location of the home page
+	  */
+	static function home($path='/') {
+		return (self::request('path') == $path);
+	}
+
 	/**
 	  * Detect a browser's preferred language
 	  *
@@ -155,7 +157,9 @@ class http {
 	  * @param  mixed   $default 	Optional default in case not found (only applies to single $key)
 	  * @return	boolean	or string
 	  */
-	static function post($keys, $default=null) {
+	static function post($keys=false, $default=null) {
+		if (!$keys) return (!empty($_POST));
+
 		$keys = a::arguments($keys);
 
 		if (count($keys) == 1) return a::get($_POST, $keys[0], $default);
@@ -205,8 +209,10 @@ class http {
 	  * @param  mixed   $default 	Optional default in case not found (only applies to single $key)
 	  * @return	boolean	or string
 	  */
-	static function session($keys, $default=null) {
+	static function session($keys=false, $default=null) {
 		if (session_status() == PHP_SESSION_NONE) session_start();
+
+		if (!$keys) return (!empty($_SESSION)); //added for consistency with get and post, not sure if works
 
 		$keys = a::arguments($keys);
 

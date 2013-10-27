@@ -32,7 +32,7 @@ class html {
 
 	private static $generic_containers = array(
 		'article', 'aside', 'code', 'em', 'fieldset', 'fig', 'figcaption', 'footer', 'h1', 'h2', 'h3', 'h4', 'h5', 
-		'header', 'li', 'p', 'pre', 'section', 'small', 'span', 'strong', 'table', 'tbody', 'td', 'th', 'thead', 'tr');
+		'header', 'label', 'li', 'p', 'pre', 'section', 'small', 'span', 'strong', 'tbody', 'td', 'th', 'thead', 'tr');
 	
 	/**
 	  * Generic container catch-all function
@@ -224,6 +224,108 @@ class html {
 	}
 
 	/**
+	  * Special <form> container tag.  
+	  *
+	  * @param	mixed	$content	Content may be an array
+	  * @param	mixed	$values		Associative array or resultset object with key=>value values
+	  * @return	string				The <FORM> tag
+	  */
+	static function form($content='', $values=false, $arguments=false) {
+		$arguments = self::arguments($arguments);
+
+		//set defaults
+		if (empty($arguments['action']))	$arguments['action']	= http::request();
+		if (empty($arguments['enctype']))	$arguments['enctype']	= 'multipart/form-data';
+		if (empty($arguments['method']))	$arguments['method']	= 'POST';
+		if (empty($arguments['role']))		$arguments['role']		= 'form';
+
+		if (is_array($content)) {
+			//no empty forms
+			if (!count($content)) return null;
+
+			//populate values
+			if ($values) {
+				if (is_object($values)) $values = a::object($values);
+				foreach ($values as $key=>$value) {
+					if (isset($content[$key]) && empty($content[$key]['value'])) {
+						$content[$key]['value'] = $value;
+					}
+				}
+			}
+
+			//parse fields
+			$fields = array();
+			foreach ($content as $name=>$field) {
+				if (empty($field['value'])) $field['value'] = false;
+
+				switch ($field['type']) {
+					case 'checkboxes' :
+					$return = '';
+					foreach ($field['options'] as $key=>$option) {
+						$return .= html::div('checkbox', html::label(
+						    '<input type="checkbox" name="' . $name . '" value="' . $key . '">'
+						    . $option
+						));
+					}
+					break;
+
+					case 'email' :
+					$field_args = array('value'=>$field['value'], 'class'=>'form-control', 'placeholder'=>$field['label']);
+					if (!empty($field['autocomplete'])) $field_args['autocomplete'] = $field['autocomplete'];
+					$return = html::input('email', $name, $field_args);
+					break;
+
+					case 'password' :
+					$field_args = array('class'=>'form-control', 'placeholder'=>$field['label']);
+					if (!empty($field['autocomplete'])) $field_args['autocomplete'] = $field['autocomplete'];
+					$return = html::input('password', $name, $field_args);
+					break;
+
+					case 'radio' :
+					$return = '';
+					foreach ($field['options'] as $key=>$value) {
+						$checked = ($key == $field['value']) ? 'checked' : false;
+						$return .= html::div('radio', html::label(
+							html::input('radio', $name, array('value'=>$key, 'checked'=>$checked)) . $value
+						));
+					}
+					break;
+
+					case 'text' :
+					$return = html::input('text', $name, array('value'=>$field['value'], 'class'=>'form-control', 'placeholder'=>$field['label']));
+					break;
+				}
+
+				$return = html::label($field['label'], array('for'=>$name, 'class'=>'col-lg-2 control-label')) . 
+					html::div('col-lg-10', $return);
+
+				$fields[] = html::div('form-group', $return);
+			}
+
+			$content = implode($fields);
+
+			$content .= html::div('form-group', 
+				html::div('col-lg-offset-2 col-lg-10', 
+					html::input('submit', false, array('class'=>'btn btn-primary', 'value'=>config::get('form.save')))
+				)
+			);
+		}
+
+		return self::tag('form', $arguments, $content);
+	}
+	
+	/**
+	  * Special <head> container tag.  Prepends meta charset
+	  *
+	  * @param	string	$content	The content contained inside the h1
+	  * @return	string				The <HEAD> tag
+	  */
+	static function head($content='') {
+		$content = self::meta('charset') . $content; //auto-prepend charset because it's always needed
+		return self::tag('head', false, $content);
+	}
+
+	/**
 	  * Make an icon; currently uses Bootstrap 3's Glyphicons
 	  *
 	  * @param	string	$icon	The icon keyword
@@ -233,18 +335,6 @@ class html {
 		return self::tag('i', 'glyphicon glyphicon-' . $icon);
 	}
 
-	
-	/**
-	  * Special <head> container tag.  Prepends meta charset
-	  *
-	  * @param	string	$content	The content contained inside the h1
-	  * @return	string				The HEAD tag
-	  */
-	static function head($content='') {
-		$content = self::meta('charset') . $content; //auto-prepend charset because it's always needed
-		return self::tag('head', false, $content);
-	}
-	
 	/**
 	  * Special <img> function.  Tries to get height & width if not specified
 	  *
@@ -254,6 +344,24 @@ class html {
 	static function img($filename, $arguments=false) {
 		$arguments = self::arguments($arguments);
 		
+	}
+
+	/**
+	  * Make an input
+	  *
+	  * @param	string	$type	Input type = text / password / date / time / etc
+	  * @param	string	$name	The name / id of the input
+	  * @return	string			The icon <I> tag
+	  */
+	static function input($type, $name, $arguments=false) {
+		$arguments = self::arguments($arguments);
+		$arguments['type'] = $type;
+		if ($type == 'radio') {
+			$arguments['name'] = $name;
+		} else {
+			$arguments['name'] = $arguments['id'] = $name;
+		}
+		return self::tag('input', $arguments);
 	}
 	
 	/**
@@ -431,22 +539,28 @@ class html {
 			if (!count($content)) return null;
 
 			//build header & cache slugs
-			$header = array();
-			$columns = array_keys($content[0]);
-			foreach ($columns as &$column) {
-				$header[$column] = str::sanitize($column);
-				$column = self::th($column, $header[$column]);
+			$header = $columns = array();
+			$keys = array_keys($content[0]);
+			foreach ($keys as $key) {
+				if (!str::starts($key, '_')) {
+					$columns[$key] = str::sanitize($key);
+					$header[] = self::th($key, $columns[$key]);
+				}
 			}
 
 			//format rows
 			foreach ($content as &$row) {
 				$cells = array();
-				foreach ($header as $key=>$slug) $cells[] = self::td($row[$key], $slug);
-				$row = self::tr(implode($cells));
+				foreach ($columns as $key=>$slug) $cells[] = self::td($row[$key], $slug);
+				
+				$row_args = array();
+				if (!empty($row['_class'])) $row_args['class']	= $row['_class'];
+				if (!empty($row['_id']))	$row_args['id'] 	= $row['_id'];
+				$row = self::tr(implode($cells), $row_args);
 			}
 
 			//assemble output
-			$content = self::thead(self::tr(implode($columns))) . self::tbody(implode($content));
+			$content = self::thead(self::tr(implode($header))) . self::tbody(implode($content));
 		}
 
 		return self::tag('table', $arguments, $content);

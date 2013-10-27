@@ -24,6 +24,7 @@ class str {
 		$timestamp = strtotime($timestamp);
 		if ($format == 'sql') return date('Y-m-d H:i:00', $timestamp);
 		if ($relative && (date('Y-m-d') == date('Y-m-d', $timestamp))) {
+			//show time for dates that are today
 			if (!$format) $format = config::get('time.format');
 		} else {
 			if (!$format) $format = config::get('date.format');

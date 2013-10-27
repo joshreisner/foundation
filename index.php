@@ -16,7 +16,7 @@ if (!empty($config)) config::set($config);
 if (file_exists($_SERVER['DOCUMENT_ROOT'] . '/' . config::get('config.file'))) require_once($_SERVER['DOCUMENT_ROOT'] . '/' . config::get('config.file'));
 
 //have to set this per PHP
-date_default_timezone_set(config::get('timezone'));
+date_default_timezone_set(config::get('time.zone'));
 
 //convenience constants
 if (!defined('TAB'))		define('TAB', 		"\t");

@@ -54,6 +54,17 @@ class a {
 	static function get($array, $key, $default=null) {
     	return (isset($array[$key])) ? $array[$key] : $default;
 	}
+
+	/**
+	  * Converts an object to an associative array recursively
+	  *
+	  * @param	object	$object			The object to convert
+	  * @return	array					Returned array
+	  */
+	static function object($object) {
+	    if (is_object($object)) $object = get_object_vars($object);
+	    return is_array($object) ? array_map(array(__CLASS__, __FUNCTION__), $object) : $object;
+	}
 	
 	/**
 	  * It's like explode, but it cleans up the array a little before returning it
