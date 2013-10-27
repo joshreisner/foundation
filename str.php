@@ -12,6 +12,26 @@
 class str {
 
 	/**
+	  * Format a date
+	  *
+	  * @param	mixed	$timestamp	Either a string or a unix date
+	  * @param	string	$format 	Optional format per php date
+	  * @param	boolean	$relative 	If today, return time
+	  * @return	string				The formatted date string
+	  */
+	static function date($timestamp, $format=false, $relative=true) {
+		if (empty($timestamp)) return null;
+		$timestamp = strtotime($timestamp);
+		if ($format == 'sql') return date('Y-m-d H:i:00', $timestamp);
+		if ($relative && (date('Y-m-d') == date('Y-m-d', $timestamp))) {
+			if (!$format) $format = config::get('time.format');
+		} else {
+			if (!$format) $format = config::get('date.format');
+		}
+		return strftime($format, $timestamp);
+	}
+
+	/**
 	  * Encode a string for email obfuscation
 	  *
 	  * @param	string	$string		The string to encode

@@ -24,6 +24,47 @@ class http {
 	}
 
 	/**
+	  * Get or set a cookie
+	  *
+	  * @param	string	$key	The name of the cookie
+	  * @param	string	$value	Optional value to set
+	  * @return	string			If called with just one argument, will return cookie string value
+	  */
+	static function cookie($key) {
+		if (func_num_args() > 1) {
+			//setting cookie value
+			$value = func_get_arg(1);
+			$time = (empty($value)) ? time()-3600 : mktime(0, 0, 0, 1, 1, 2030);
+			if (func_num_args() == 3) $time = 0;
+			$_COOKIE[$key] = $value;
+			setcookie($key, $value, $time, '/', '.' . self::request('domain'));
+		} else {
+			//getting cookie value
+			if (!isset($_COOKIE[$key]) || empty($_COOKIE[$key])) return false;
+			return str::escape($_COOKIE[$key]);
+		}
+	}
+
+	/**
+	  * Tell if $_GET variables are present 
+	  *
+	  * @param	mixed	$keys		String, array, or comma-separated
+	  * @param  mixed   $default 	Optional default in case not found (only applies to single $key)
+	  * @return	boolean	or string
+	  */
+	static function get($keys, $default=null) {
+		$keys = a::arguments($keys);
+
+		if (count($keys) == 1) return a::get($_GET, $keys[0], $default);
+
+		foreach ($keys as $key) {
+			if (!a::get($_GET, $key)) return false;
+		}
+
+		return true;
+	}
+
+	/**
 	  * Convenience function for sites that use mod_rewrite to detect whether current page is the home page (usually located at /)
 	  *
 	  * @param	string	$path	The location of the home page
@@ -108,15 +149,22 @@ class http {
 	}
 	
 	/**
-	  * Tell if POST variables are present, and if specified, whether it's a particular form
+	  * Tell if $_POST variables are present 
 	  *
-	  * @param	string	$form	This works with a hidden form_id field in the form class to identify which form is being posted
-	  * @return	boolean	
+	  * @param	mixed	$keys		String, array, or comma-separated
+	  * @param  mixed   $default 	Optional default in case not found (only applies to single $key)
+	  * @return	boolean	or string
 	  */
-	static function posting($form=false) {
-		if (!$form) return (!empty($_POST));
-		if (!isset($_POST['form_id'])) return false;
-		return ($form == $_POST['form_id']);
+	static function post($keys, $default=null) {
+		$keys = a::arguments($keys);
+
+		if (count($keys) == 1) return a::get($_POST, $keys[0], $default);
+
+		foreach ($keys as $key) {
+			if (!a::get($_POST, $key)) return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -149,4 +197,26 @@ class http {
 		$return = self::parse($_SERVER['HTTP_REFERER']);
 		return @$return[$part];
 	}
+
+	/**
+	  * Tell if $_SESSION variables are present 
+	  *
+	  * @param	mixed	$keys		String, array, or comma-separated
+	  * @param  mixed   $default 	Optional default in case not found (only applies to single $key)
+	  * @return	boolean	or string
+	  */
+	static function session($keys, $default=null) {
+		if (session_status() == PHP_SESSION_NONE) session_start();
+
+		$keys = a::arguments($keys);
+
+		if (count($keys) == 1) return a::get($_SESSION, $keys[0], $default);
+
+		foreach ($keys as $key) {
+			if (!a::get($_SESSION, $key)) return false;
+		}
+
+		return true;
+	}
+
 }

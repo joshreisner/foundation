@@ -32,7 +32,7 @@ class html {
 
 	private static $generic_containers = array(
 		'article', 'aside', 'code', 'em', 'fieldset', 'fig', 'figcaption', 'footer', 'h1', 'h2', 'h3', 'h4', 'h5', 
-		'header', 'li', 'p', 'pre', 'section', 'small', 'span', 'strong', 'table', 'td', 'th', 'thead', 'tr');
+		'header', 'li', 'p', 'pre', 'section', 'small', 'span', 'strong', 'table', 'tbody', 'td', 'th', 'thead', 'tr');
 	
 	/**
 	  * Generic container catch-all function
@@ -197,14 +197,18 @@ class html {
 			} elseif (is_numeric($var)) {
 				return 'numeric';
 			} elseif (is_bool($var)) {
-				return 'bool';
+				return ($var) ? 'true' : 'false';
 			} else {
 				return 'scalar but non string / numeric / bool';
 			}
 		} else {
 			if (is_array($var)) {
 				if (a::associative($var)) {
-					return 'assoc';
+					$return = '<table cellpadding="5" border="1" style="margin:20px;font:12px helvetica;">';
+					foreach ($var as $key=>$value) {
+						$return .= '<tr><td style="background-color:#eee;font-weight:bold;">' . $key . '</td><td>' . self::dump($value) . '</td></tr>';
+					}
+					return $return . '</table>';
 				} else {
 					foreach ($var as &$value) $value = self::dump($value);
 					return html::ul($var);
@@ -220,24 +224,15 @@ class html {
 	}
 
 	/**
-	  * Twitter Bootstrap helper function.  Creates a set of div.row and div.spanX for fluid layouts.
+	  * Make an icon; currently uses Bootstrap 3's Glyphicons
 	  *
-	  * @param	array	$array		One-dimensional array of contents for the grid
-	  * @param	int		$columns	The number of columns for each row, must be 1, 2, 3, 4, 6 or 12
-	  * @param string	$class		A class to append to each div.row
-	  * @return	string				Bootstrap grid HTML
+	  * @param	string	$icon	The icon keyword
+	  * @return	string			The icon <I> tag
 	  */
-	static function grid($array, $columns=3, $class='') {
-		if (!in_array($columns, array(1, 2, 3, 4, 6, 12))) return false;
-		if (!empty($class)) $class = ' ' . $class;
-		$span = round(12 / $columns);
-		$rows = array_sets($array, $columns);
-		foreach ($rows as &$row) {
-			foreach ($row as &$column) $column = self::div('span' . $span, $column);
-			$row = self::div('row' . $class, implode($row));
-		}
-		return implode($rows);
+	static function icon($icon) {
+		return self::tag('i', 'glyphicon glyphicon-' . $icon);
 	}
+
 	
 	/**
 	  * Special <head> container tag.  Prepends meta charset
@@ -423,6 +418,38 @@ class html {
 	  */
 	static function style($css) {
 		return self::tag('style', array('type'=>'text/css'), $css);
+	}
+	
+	/**
+	  * Special <TABLE> tag -- content can be an array of associative arrays
+	  *
+	  */
+	static function table($content, $arguments=false) {
+
+		if (is_array($content)) {
+			//no empty tables
+			if (!count($content)) return null;
+
+			//build header & cache slugs
+			$header = array();
+			$columns = array_keys($content[0]);
+			foreach ($columns as &$column) {
+				$header[$column] = str::sanitize($column);
+				$column = self::th($column, $header[$column]);
+			}
+
+			//format rows
+			foreach ($content as &$row) {
+				$cells = array();
+				foreach ($header as $key=>$slug) $cells[] = self::td($row[$key], $slug);
+				$row = self::tr(implode($cells));
+			}
+
+			//assemble output
+			$content = self::thead(self::tr(implode($columns))) . self::tbody(implode($content));
+		}
+
+		return self::tag('table', $arguments, $content);
 	}
 	
 	/**

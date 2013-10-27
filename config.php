@@ -14,25 +14,22 @@ class config {
 	private static $defaults = array(
 		'charset'			=> 'utf-8',
 		'config.file'		=> 'config.php',
-		'css.shortcuts'		=> array(
-									'bootstrap'=>'//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css'
-								),
-		'error.api'			=> false,
-		'error.color'		=> '#c55',
-		'error.display'		=> false,
-		'error.email'		=> false,
-		'error.log'			=> false,
+		'css.shortcuts'		=> array('bootstrap'=>'//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css'),
+		'date.format'		=> '%b %d, %Y',
 		'db.host'			=> 'localhost',
 		'db.meta_table'		=> 'meta',
 		'db.mysql_engine'	=> 'MyISAM',
 		'db.password'		=> '',
 		'db.user'			=> 'root',
-		'js.shortcuts'		=> array(
-									'jquery'=>'//code.jquery.com/jquery-latest.js', 
-									'bootstrap'=>'//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js'
-								),
+		'error.api'			=> false,
+		'error.color'		=> '#c55',
+		'error.display'		=> false,
+		'error.email'		=> false,
+		'error.log'			=> false,
+		'js.shortcuts'		=> array('jquery'=>'//code.jquery.com/jquery-latest.js', 'bootstrap'=>'//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js'),
 		'language'			=> 'en',
 		'session.user_id'	=> 'user_id',
+		'time.format'		=> '%l:%M%p',
 		'timezone'			=> 'America/New_York',
 		'viewport'			=> 'width=device-width, initial-scale=1.0',
 	);

@@ -13,7 +13,7 @@ set_error_handler(array('error', 'handle'));
 
 //set configuration in two ways: $config variable and config file
 if (!empty($config)) config::set($config);
-if (file_exists(config::get('config.file'))) require_once(config::get('config.file'));
+if (file_exists($_SERVER['DOCUMENT_ROOT'] . '/' . config::get('config.file'))) require_once($_SERVER['DOCUMENT_ROOT'] . '/' . config::get('config.file'));
 
 //have to set this per PHP
 date_default_timezone_set(config::get('timezone'));

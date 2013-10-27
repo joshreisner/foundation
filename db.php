@@ -25,6 +25,30 @@ class db {
 	private static $order_by	= array();
 
 	/**
+	  * Make an associative array from resultset
+	  * Takes the first object var of a resultset and makes it the associative key
+	  * Make sure your first element is unique, or you will get interesting results!
+	  * 
+	  */
+	static function associate() {
+		$selects = a::arguments(func_get_args());
+		if (!$result = self::select($selects)) return $result;
+		$return = array();
+		$keys 	= array_keys(get_object_vars($result[0])); //eg 'id', 'title', 'description', 'active'
+		$key 	= array_shift($keys); //eg 'id' or 'title'
+		$count 	= count($keys); //remaining keys
+		foreach ($result as $row) {
+			if ($count == 1) {
+				//if there's only one element, return simple scalar value eg [$id]=>$name
+				$return[$row->{$key}] = $row->{$keys[0]};
+			} else {
+				$return[$row->{$key}] = $row;
+			}
+		}
+		return $return;
+	}
+
+	/**
 	  * Connect to the database
 	  * Sets the local cache variable $connection to a database resource handle or throws and error
 	  * 
@@ -56,7 +80,7 @@ class db {
 	  *
 	  * @return	string				Returns HTML formatted table of SQL queries
 	  */
-	function debug() {
+	static function debug() {
 		return html::dump(self::$queries);
 	}
 	
@@ -66,7 +90,8 @@ class db {
 	  * @param	string	$selects	Any amount of column names
 	  * @return	mixed				Returns an object-resultset or null
 	  */
-	function first($selects='*') {
+	function first() {
+		$selects = a::arguments(func_get_args());
 		$result = self::select($selects);
 		if (count($result)) return array_shift($result);
 		return $result;
@@ -119,14 +144,11 @@ class db {
 	  *
 	  * @param	string	$selects	Any amount of column names
 	  */
-	public function select($selects='*') {
+	public static function select() {
+		$selects = a::arguments(func_get_args());
 		
-		$selects = is_array($selects) ? $selects : func_get_args();
-
-		if ((count($selects) == 1) && strpos($selects[0], ',')) $selects = a::separated($selects[0]);
-				
 		//build query
-		foreach ($selects as &$select) if (!strstr($select, '.')) $select = TAB . $select;
+		foreach ($selects as &$select) $select = TAB . $select;
 		$sql = 'SELECT ' . NEWLINE . implode(',' . NEWLINE, $selects) . NEWLINE . 'FROM ' . self::$table;
 		if (!empty(self::$joins)) $sql .= NEWLINE . implode(NEWLINE, self::$joins);
 		if (!empty(self::$wheres)) $sql .= NEWLINE . 'WHERE' . NEWLINE . TAB . implode(' AND ' . NEWLINE . TAB, self::$wheres);
@@ -146,6 +168,28 @@ class db {
 		self::$table = $table;
 		return new self;
     }
+
+	/**
+	  * Run a SQL update
+	  *
+	  * @param	array	$fields		Associative array of fields to update
+	  * @return	int					Number of records affected
+	  */
+    public static function update($updates) {
+		if (empty(self::$table)) trigger_error('db::update() must come after a db::table() statement');
+		$fields = array();
+    	foreach ($updates as $field=>$value) {
+    		if (is_numeric($value) || $value == 'NOW()' || $value == 'NULL') {
+    			$fields[] = $field . ' = ' . $value;
+    		} else {
+    			$fields[] = $field . ' = \'' . str::escape($value) . '\'';
+    		}
+    	}
+    	$sql = 'UPDATE ' . self::$table . ' SET ' . implode(',', $fields);
+		if (!empty(self::$wheres)) $sql .= NEWLINE . 'WHERE' . NEWLINE . TAB . implode(' AND ' . NEWLINE . TAB, self::$wheres);
+		if (self::query($sql)) return self::$connection->rowCount();
+    }
+
 	/**
 	  * Specify a where clause on the query builder
 	  *
@@ -154,7 +198,7 @@ class db {
 	  * @param	int		$value		The value to compare
 	  * @return	object				Pass the query builder object up the chain
 	  */
-	public function where($column, $operator='=', $value=1) {
+	public function where($column, $value=1, $operator='=') {
 		if (!strstr($column, '.')) $column = self::$table . '.' . $column;
 		if (is_string($value)) $value = '\'' . str::escape($value) . '\'';
 		self::$wheres[] = $column . ' ' . $operator . ' ' . $value;
