@@ -259,7 +259,7 @@ class html {
 				if (empty($field['value'])) $field['value'] = false;
 
 				switch ($field['type']) {
-					case 'checkboxes' :
+					case 'checkboxes':
 					$return = '';
 					foreach ($field['options'] as $key=>$option) {
 						$return .= html::div('checkbox', html::label(
@@ -269,19 +269,23 @@ class html {
 					}
 					break;
 
-					case 'email' :
+					case 'email':
 					$field_args = array('value'=>$field['value'], 'class'=>'form-control', 'placeholder'=>$field['label']);
 					if (!empty($field['autocomplete'])) $field_args['autocomplete'] = $field['autocomplete'];
 					$return = html::input('email', $name, $field_args);
 					break;
 
-					case 'password' :
+					case 'file':
+					$return = html::input('file', $name);
+					break;
+
+					case 'password':
 					$field_args = array('class'=>'form-control', 'placeholder'=>$field['label']);
 					if (!empty($field['autocomplete'])) $field_args['autocomplete'] = $field['autocomplete'];
 					$return = html::input('password', $name, $field_args);
 					break;
 
-					case 'radio' :
+					case 'radio':
 					$return = '';
 					foreach ($field['options'] as $key=>$value) {
 						$checked = ($key == $field['value']) ? 'checked' : false;
@@ -291,9 +295,12 @@ class html {
 					}
 					break;
 
-					case 'text' :
+					case 'text':
 					$return = html::input('text', $name, array('value'=>$field['value'], 'class'=>'form-control', 'placeholder'=>$field['label']));
 					break;
+
+					default:
+					trigger_error('html::form doesn\'t yet support ' . $field['type']);
 				}
 
 				$return = html::label($field['label'], array('for'=>$name, 'class'=>'col-lg-2 control-label')) . 
@@ -533,6 +540,7 @@ class html {
 	  *
 	  */
 	static function table($content, $arguments=false) {
+		$last_group = '';
 
 		if (is_array($content)) {
 			//no empty tables
@@ -547,6 +555,7 @@ class html {
 					$header[] = self::th($key, $columns[$key]);
 				}
 			}
+			$colspan = count($header);
 
 			//format rows
 			foreach ($content as &$row) {
@@ -556,7 +565,14 @@ class html {
 				$row_args = array();
 				if (!empty($row['_class'])) $row_args['class']	= $row['_class'];
 				if (!empty($row['_id']))	$row_args['id'] 	= $row['_id'];
-				$row = self::tr(implode($cells), $row_args);
+				if (!empty($row['_group']) && ($row['_group'] != $last_group)) {
+					$last_group = $row['_group'];
+					$row['_group'] = self::tr(self::td($row['_group'], array('colspan'=>$colspan)), 'group');
+				} else {
+					$row['_group'] = '';
+				}
+
+				$row = $row['_group'] . self::tr(implode($cells), $row_args);
 			}
 
 			//assemble output

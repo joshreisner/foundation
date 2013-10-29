@@ -12,6 +12,19 @@
 class str {
 
 	/**
+	  * Shorten a $string to a particular $length
+	  *
+	  * @param	mixed	$string		Input string
+	  * @param	string	$length 	
+	  * @param	boolean	$relative 	If today, return time
+	  * @return	string				The formatted date string
+	  */
+	static function clip($string, $length=50, $append='…') {
+		//todo, write function
+		return $string;
+	}
+
+	/**
 	  * Format a date
 	  *
 	  * @param	mixed	$timestamp	Either a string or a unix date
@@ -132,6 +145,21 @@ class str {
 		$length = strlen($needle);
 		if (strtolower(substr($haystack, 0, $length)) == strtolower($needle)) return substr($haystack, $length);
 		return false;
+	}
+
+	/**
+	  * Format a time
+	  *
+	  * @param	mixed	$timestamp	Either a string or a unix date
+	  * @param	string	$format 	Optional format per php date
+	  * @param	boolean	$relative 	If today, return time
+	  * @return	string				The formatted date string
+	  */
+	static function time($timestamp, $format=false) {
+		if (empty($timestamp)) return null;
+		$timestamp = strtotime($timestamp);
+		if (!$format) $format = config::get('time.format');
+		return strftime($format, $timestamp);
 	}
 
 	/**
