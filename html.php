@@ -8,18 +8,18 @@
  * One of the key params you'll see over and over in this class is the $arguments class.  This can be either a string 
  * or an associative array.  If an array, keys are arguments such as class=>foo, id=>bar, width=>12.  If a string, it's
  * assumed to be a class unless prepended with a #, in which case it's an id.  
- * html::div('#foo') becomes <div id="foo"></div>
- * html::div('bar') becomes <div class="bar"></div>
- * html::div(array('id'=>'foo', 'class'=>'bar)) becomes <div id="foo" class="bar"></div>
+ * self::div('#foo') becomes <div id="foo"></div>
+ * self::div('bar') becomes <div class="bar"></div>
+ * self::div(array('id'=>'foo', 'class'=>'bar)) becomes <div id="foo" class="bar"></div>
  *
  * Order of arguments is a tricky thing, and consistency is balanced against utility.  "Generic containers" are available for
- * all the tags in the $generic_containers array, and are in the format html::h1($content, $arguments) 
+ * all the tags in the $generic_containers array, and are in the format self::h1($content, $arguments) 
  * A notable exception are <div>s, which are reversed so they can be used in constructions where it's helpful to have the arguments
  * near the tag
- * html::div('classname',
- * 		html::h1('Here is a content title') . 
- * 		html::p('Here is an intro paragraph', 'intro') . 
- *		html::p('Here is another paragraph')
+ * self::div('classname',
+ * 		self::h1('Here is a content title') . 
+ * 		self::p('Here is an intro paragraph', 'intro') . 
+ *		self::p('Here is another paragraph')
  * );
  *
  * Todo: research whether there's a way to define the generic container functions from within a repeat loop, either that, or
@@ -31,14 +31,16 @@
 class html {
 
 	private static $generic_containers = array(
-		'article', 'aside', 'code', 'em', 'fieldset', 'fig', 'figcaption', 'footer', 'h1', 'h2', 'h3', 'h4', 'h5', 
-		'header', 'label', 'li', 'p', 'pre', 'section', 'small', 'span', 'strong', 'tbody', 'td', 'th', 'thead', 'tr');
+		'article', 'aside', 'code', 'em', 'fieldset', 'fig', 'figcaption', 'footer', 
+		'h1', 'h2', 'h3', 'h4', 'h5', 'header', 'label', 'li', 
+		'option', 'p', 'pre', 'section', 'select', 'small', 'span', 'strong', 
+		'tbody', 'td', 'textarea', 'th', 'thead', 'tr');
 	
 	/**
 	  * Generic container catch-all function
 	  *
-	  * @param	string	$tag		Not called directly, this is the span in html::span()
-	  * @param	mixed	$arguments	Any arguments supplied to the container, usually html::p($content, $arguments)
+	  * @param	string	$tag		Not called directly, this is the span in self::span()
+	  * @param	mixed	$arguments	Any arguments supplied to the container, usually self::p($content, $arguments)
 	  * @return	string				The formed container, eg <footer>Some content</footer>
 	  */
 	static function __callStatic($tag, $arguments) {
@@ -211,7 +213,7 @@ class html {
 					return $return . '</table>';
 				} else {
 					foreach ($var as &$value) $value = self::dump($value);
-					return html::ul($var);
+					return self::ul($var);
 				}
 			} elseif (is_object($var)) {
 				return 'object' . self::dump(a::object($var));
@@ -262,7 +264,7 @@ class html {
 					case 'checkboxes':
 					$return = '';
 					foreach ($field['options'] as $key=>$option) {
-						$return .= html::div('checkbox', html::label(
+						$return .= self::div('checkbox', self::label(
 						    '<input type="checkbox" name="' . $name . '" value="' . $key . '">'
 						    . $option
 						));
@@ -272,48 +274,61 @@ class html {
 					case 'email':
 					$field_args = array('value'=>$field['value'], 'class'=>'form-control', 'placeholder'=>$field['label']);
 					if (!empty($field['autocomplete'])) $field_args['autocomplete'] = $field['autocomplete'];
-					$return = html::input('email', $name, $field_args);
+					$return = self::input('email', $name, $field_args);
 					break;
 
 					case 'file':
-					$return = html::input('file', $name);
+					$return = self::input('file', $name);
 					break;
 
 					case 'password':
 					$field_args = array('class'=>'form-control', 'placeholder'=>$field['label']);
 					if (!empty($field['autocomplete'])) $field_args['autocomplete'] = $field['autocomplete'];
-					$return = html::input('password', $name, $field_args);
+					$return = self::input('password', $name, $field_args);
 					break;
 
 					case 'radio':
 					$return = '';
 					foreach ($field['options'] as $key=>$value) {
 						$checked = ($key == $field['value']) ? 'checked' : false;
-						$return .= html::div('radio', html::label(
-							html::input('radio', $name, array('value'=>$key, 'checked'=>$checked)) . $value
+						$return .= self::div('radio', self::label(
+							self::input('radio', $name, array('value'=>$key, 'checked'=>$checked)) . $value
 						));
 					}
 					break;
 
+					case 'select':
+					$return = '';
+					foreach ($field['options'] as $key=>$value) {
+						$selected = ($key == $field['value']) ? 'selected' : false;
+						$return .= self::option($value, array('value'=>$key, 'selected'=>$selected));
+					}
+					$return = self::select($return, array('name'=>$name, 'class'=>'form-control'));
+					break;
+
 					case 'text':
-					$return = html::input('text', $name, array('value'=>$field['value'], 'class'=>'form-control', 'placeholder'=>$field['label']));
+					$return = self::input('text', $name, array('value'=>$field['value'], 'class'=>'form-control', 'placeholder'=>$field['label']));
+					break;
+
+					case 'textarea':
+					$return = self::textarea($field['value'], array('name'=>$name, 'class'=>'form-control', 'placeholder'=>$field['label']));
 					break;
 
 					default:
-					trigger_error('html::form doesn\'t yet support ' . $field['type']);
+					trigger_error('self::form doesn\'t yet support ' . $field['type']);
 				}
 
-				$return = html::label($field['label'], array('for'=>$name, 'class'=>'col-lg-2 control-label')) . 
-					html::div('col-lg-10', $return);
+				$return = self::label($field['label'], array('for'=>$name, 'class'=>'col-lg-2 control-label')) . 
+					self::div('col-lg-10', $return);
 
-				$fields[] = html::div('form-group', $return);
+				$fields[] = self::div('form-group', $return);
 			}
 
 			$content = implode($fields);
 
-			$content .= html::div('form-group', 
-				html::div('col-lg-offset-2 col-lg-10', 
-					html::input('submit', false, array('class'=>'btn btn-primary', 'value'=>config::get('form.save')))
+			$content .= self::div('form-group', 
+				self::div('col-lg-offset-2 col-lg-10', 
+					self::input('submit', false, array('class'=>'btn btn-primary', 'value'=>config::get('form.save')))
 				)
 			);
 		}

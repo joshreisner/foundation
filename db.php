@@ -118,14 +118,25 @@ class db {
 	/**
 	  * Tell whether a given $field in a $table exists or not
 	  * @param	string		$table	Table name to check
-	  * @param	string		$table	Table name to check
-	  * @param	string		$table	Table name to check
+	  * @param	string		$field	Field name to check
 	  * @return	bool				True or false if exists
 	  *
 	  */
 	public static function field_exists($table, $field) {
 		if (!self::table_exists($table)) return false;
 		return in_array($field, self::fields($table));
+	}
+
+	/**
+	  * Tell whether a given $field can be set to NULL
+	  * @param	string		$table	Table name to check
+	  * @param	string		$field	Field name to check
+	  * @return	bool				True or false if nullable
+	  *
+	  */
+	public static function field_nullable($table, $field) {
+		if (!self::field_exists($table, $field)) trigger_error('db::field_nullable looking for a non-existent field (' . $field . ') in table ' . $table . '.');
+		return self::$schema[$table][$field]['null'];
 	}
 
 	/**
@@ -163,14 +174,14 @@ class db {
 
 		//force cache to exist and try to use cache
 		if (!self::table_exists($table)) trigger_error('trying to get fields on non-existent table.');
-		if (!empty(self::$schema[$table])) return self::$schema[$table];
+		if (!empty(self::$schema[$table])) return array_keys(self::$schema[$table]);
 
 		//otherwise get fields
 		$result = self::query('SHOW COLUMNS FROM ' . $table);
 		foreach ($result as $field) {
 			self::$schema[$table][$field->Field] = array(
 				'type'=>$field->Type, //todo parse parens to new length element, eg int(11)
-				'null'=>$field->Null,
+				'null'=>($field->Null == 'YES') ? true : false,
 				'key'=>$field->Key,
 				'default'=>$field->Default,
 			);
@@ -212,9 +223,10 @@ class db {
 	  */
 	function insert($inserts) {
 		if (empty(self::$table)) trigger_error('db::insert() must come after a db::table() statement');
-
 		$fields = $values = array();
     	foreach ($inserts as $field=>$value) {
+    		//if (self::field_exists(self::$table))
+	   		if (empty($value) && self::field_nullable(self::$table, $field)) $value = 'NULL';
     		$fields[] = $field;
     		$values[] = self::escape($value);
     	}
@@ -367,9 +379,12 @@ class db {
 		if (!isset($updates['updated']) && self::field_exists(self::$table, 'updated')) $updates['updated'] = 'NOW()';
 		if (!isset($updates['updater']) && self::field_exists(self::$table, 'updater')) $updates['updater'] = http::user();
 
+		//die(html::dump(self::fields(self::$table)));
+
 		//loop through updates and format
 		$fields = array();
     	foreach ($updates as $field=>$value) {
+    		if (empty($value) && self::field_nullable(self::$table, $field)) $value = 'NULL';
    			$fields[] = NEWLINE . TAB . $field . ' = ' . self::escape($value);
     	}
 
