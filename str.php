@@ -32,9 +32,9 @@ class str {
 	  * @param	boolean	$relative 	If today, return time
 	  * @return	string				The formatted date string
 	  */
-	static function date($timestamp, $format=false, $relative=true) {
+	static function date($timestamp, $relative=true, $format=false) {
 		if (empty($timestamp)) return null;
-		$timestamp = strtotime($timestamp);
+		if (!is_numeric($timestamp)) $timestamp = strtotime($timestamp);
 		if ($format == 'sql') return date('Y-m-d H:i:00', $timestamp);
 		if ($relative && (date('Y-m-d') == date('Y-m-d', $timestamp))) {
 			//show time for dates that are today
