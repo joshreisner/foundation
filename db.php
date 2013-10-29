@@ -123,7 +123,9 @@ class db {
 	  * @return	bool				True or false if exists
 	  *
 	  */
-	public static function field_exists($table, $old_field, $new_field) {
+	public static function field_exists($table, $field) {
+		if (!self::table_exists($table)) return false;
+		return in_array($field, self::fields($table));
 	}
 
 	/**
@@ -135,6 +137,8 @@ class db {
 	public static function field_rename($table, $old_field, $new_field) {
 		if (!self::field_exists($table, $old_field)) trigger_error('old field doesn\'t exist');
 		if  (self::field_exists($table, $new_field)) trigger_error('new field already exists');
+		self::$schema[$table] = array(); //force a schema update
+		trigger_error('this function not finished yet');
 		return self::query('ALTER  ' . $table . ' CHANGE ' . $old_field . ' ' . $new_field . ' ' . self::field_type($old_field));
 	}
 
@@ -146,6 +150,32 @@ class db {
 	  *
 	  */
 	public static function field_type($table, $field) {
+		trigger_error('this function not finished yet');
+	}
+
+	/**
+	  * Return a list of fields for a $table
+	  * @param	string		$table	Table name to check
+	  * @return	bool				True or false if exists
+	  *
+	  */
+	public static function fields($table) {
+
+		//force cache to exist and try to use cache
+		if (!self::table_exists($table)) trigger_error('trying to get fields on non-existent table.');
+		if (!empty(self::$schema[$table])) return self::$schema[$table];
+
+		//otherwise get fields
+		$result = self::query('SHOW COLUMNS FROM ' . $table);
+		foreach ($result as $field) {
+			self::$schema[$table][$field->Field] = array(
+				'type'=>$field->Type, //todo parse parens to new length element, eg int(11)
+				'null'=>$field->Null,
+				'key'=>$field->Key,
+				'default'=>$field->Default,
+			);
+		}
+		return array_keys(self::$schema[$table]);
 	}
 
 	/**
@@ -300,7 +330,7 @@ class db {
 	  *
 	  */
 	public static function table_exists($table) {
-		return self::query('SHOW TABLES LIKE ' . self::escape($table));
+		return in_array($table, self::tables());
 	}
 
 	/**
@@ -309,10 +339,17 @@ class db {
 	  *
 	  */
 	public static function tables() {
+		//try using cached array
+		if (!empty(self::$schema)) return array_keys(self::$schema);
+
+		//build and cache array
 		$tables = self::query('SHOW TABLES');
 		if (count($tables)) {
 			$keys = array_keys(get_object_vars($tables[0]));
-			foreach ($tables as &$table) $table = $table->{$keys[0]};
+			foreach ($tables as &$table) {
+				$table = $table->{$keys[0]};
+				self::$schema[$table] = array();
+			}
 		}
 		return $tables;
 	}
@@ -325,12 +362,22 @@ class db {
 	  */
     public static function update($updates) {
 		if (empty(self::$table)) trigger_error('db::update() must come after a db::table() statement');
+
+    	//add metadata automatically, if fields are present
+		if (!isset($updates['updated']) && self::field_exists(self::$table, 'updated')) $updates['updated'] = 'NOW()';
+		if (!isset($updates['updater']) && self::field_exists(self::$table, 'updater')) $updates['updater'] = http::user();
+
+		//loop through updates and format
 		$fields = array();
     	foreach ($updates as $field=>$value) {
-   			$fields[] = $field . ' = ' . self::escape($value);
+   			$fields[] = NEWLINE . TAB . $field . ' = ' . self::escape($value);
     	}
+
+    	//assemble SQL query
     	$sql = 'UPDATE ' . self::$table . ' SET ' . implode(',', $fields);
 		if (!empty(self::$wheres)) $sql .= NEWLINE . 'WHERE' . NEWLINE . TAB . implode(' AND ' . NEWLINE . TAB, self::$wheres);
+
+		//execute and return
 		if (self::query($sql)) return self::$connection->rowCount();
     }
 

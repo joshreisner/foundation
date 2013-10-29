@@ -225,4 +225,20 @@ class http {
 		return true;
 	}
 
+	/**
+	  * Get or set a $_SESSION user_id
+	  *
+	  * @param	mixed	$id			The ID to set, if specified
+	  * @return	int 				The returned ID, if not specified
+	  */
+	static function user($id=false) {
+		if (session_status() == PHP_SESSION_NONE) session_start();
+
+		if ($id) {
+			$_SESSION[config::get('session.user_id')] = $id;;
+		} else {
+			return self::session(config::get('session.user_id'));
+		}
+	}
+
 }

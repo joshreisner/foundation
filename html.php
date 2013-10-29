@@ -214,7 +214,7 @@ class html {
 					return html::ul($var);
 				}
 			} elseif (is_object($var)) {
-				return 'object';
+				return 'object' . self::dump(a::object($var));
 			} elseif (is_resource($var)) {
 				return 'resource';
 			} else {
