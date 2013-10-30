@@ -261,13 +261,15 @@ class html {
 				if (empty($field['value'])) $field['value'] = false;
 				if (empty($field['options'])) $field['options'] = array();
 				$field['class'] = (empty($field['class'])) ? 'form-control' : 'form-control ' . $field['class'];
+				$return = '';
 
 				switch ($field['type']) {
 					case 'checkboxes':
-					$return = '';
+					if (!$field['value']) $field['value'] = array();
 					foreach ($field['options'] as $key=>$option) {
+						$checked = in_array($key, $field['value']) ? 'checked' : false;
 						$return .= self::div('checkbox', self::label(
-						    '<input type="checkbox" name="' . $name . '[]" value="' . $key . '">'
+							html::input('checkbox', $name, array('value'=>$key, 'checked'=>$checked))
 						    . $option
 						));
 					}
@@ -295,7 +297,6 @@ class html {
 					break;
 
 					case 'radio':
-					$return = '';
 					foreach ($field['options'] as $key=>$value) {
 						$checked = ($key == $field['value']) ? 'checked' : false;
 						$return .= self::div('radio', self::label(
@@ -305,7 +306,6 @@ class html {
 					break;
 
 					case 'select':
-					$return = '';
 					foreach ($field['options'] as $key=>$value) {
 						$selected = ($key == $field['value']) ? 'selected' : false;
 						$return .= self::option($value, array('value'=>$key, 'selected'=>$selected));
@@ -394,7 +394,9 @@ class html {
 	static function input($type, $name, $arguments=false) {
 		$arguments = self::arguments($arguments);
 		$arguments['type'] = $type;
-		if ($type == 'radio') {
+		if ($type == 'checkbox') {
+			$arguments['name'] = $name . '[]';
+		} elseif ($type == 'radio') {
 			$arguments['name'] = $name;
 		} else {
 			$arguments['name'] = $arguments['id'] = $name;

@@ -270,6 +270,23 @@ class db {
 	}
 	
 	/**
+	  * Sometimes it's useful to have a simple one-dimensional array of a single column
+	  * @param	string		$field	Field name to get
+	  * @return	array				One-dimensional array
+	  * 
+	  */
+	static function lists($field) {
+		if (!$result = self::select($field)) return $result;
+		$return = array();
+		$keys 	= array_keys(get_object_vars($result[0])); //eg 'id', 'title', 'description', 'active'
+		$key 	= array_shift($keys); //eg 'id' or 'title'
+		foreach ($result as $row) {
+			$return[] = $row->{$key};
+		}
+		return $return;
+	}
+
+	/**
 	  * Specify an ORDER BY param for your selects in the query builder
 	  *
 	  * @param	mixed	$fields		Comma-separated list of fields or array
