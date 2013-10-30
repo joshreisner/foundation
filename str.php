@@ -34,7 +34,7 @@ class str {
 	  */
 	static function date($timestamp, $relative=true, $format=false) {
 		if (empty($timestamp)) return null;
-		if (!is_numeric($timestamp)) $timestamp = strtotime($timestamp);
+		if (!is_int($timestamp)) $timestamp = strtotime($timestamp);
 		if ($format == 'sql') return date('Y-m-d H:i:00', $timestamp);
 		if ($relative && (date('Y-m-d') == date('Y-m-d', $timestamp))) {
 			//show time for dates that are today

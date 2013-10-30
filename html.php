@@ -259,22 +259,29 @@ class html {
 			$fields = array();
 			foreach ($content as $name=>$field) {
 				if (empty($field['value'])) $field['value'] = false;
+				if (empty($field['options'])) $field['options'] = array();
+				$field['class'] = (empty($field['class'])) ? 'form-control' : 'form-control ' . $field['class'];
 
 				switch ($field['type']) {
 					case 'checkboxes':
 					$return = '';
 					foreach ($field['options'] as $key=>$option) {
 						$return .= self::div('checkbox', self::label(
-						    '<input type="checkbox" name="' . $name . '" value="' . $key . '">'
+						    '<input type="checkbox" name="' . $name . '[]" value="' . $key . '">'
 						    . $option
 						));
 					}
 					break;
 
 					case 'email':
-					$field_args = array('value'=>$field['value'], 'class'=>'form-control', 'placeholder'=>$field['label']);
+					$field_args = array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>$field['label']);
 					if (!empty($field['autocomplete'])) $field_args['autocomplete'] = $field['autocomplete'];
 					$return = self::input('email', $name, $field_args);
+					break;
+
+					case 'date':
+					$field_args = array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>'mm/dd/yyyy');
+					$return = self::input('date', $name, $field_args);
 					break;
 
 					case 'file':
@@ -282,7 +289,7 @@ class html {
 					break;
 
 					case 'password':
-					$field_args = array('class'=>'form-control', 'placeholder'=>$field['label']);
+					$field_args = array('class'=>$field['class'], 'placeholder'=>$field['label']);
 					if (!empty($field['autocomplete'])) $field_args['autocomplete'] = $field['autocomplete'];
 					$return = self::input('password', $name, $field_args);
 					break;
@@ -303,15 +310,24 @@ class html {
 						$selected = ($key == $field['value']) ? 'selected' : false;
 						$return .= self::option($value, array('value'=>$key, 'selected'=>$selected));
 					}
-					$return = self::select($return, array('name'=>$name, 'class'=>'form-control'));
+					$return = self::select($return, array('name'=>$name, 'class'=>$field['class']));
 					break;
 
 					case 'text':
-					$return = self::input('text', $name, array('value'=>$field['value'], 'class'=>'form-control', 'placeholder'=>$field['label']));
+					$return = self::input('text', $name, array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>$field['label']));
 					break;
 
 					case 'textarea':
-					$return = self::textarea($field['value'], array('name'=>$name, 'class'=>'form-control', 'placeholder'=>$field['label']));
+					$return = self::textarea($field['value'], array('name'=>$name, 'class'=>$field['class'], 'placeholder'=>$field['label']));
+					break;
+
+					case 'time':
+					$return = self::input('time', $name, array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>'--:-- --'));
+					break;
+
+					case 'url':
+					case 'url-local':
+					$return = self::input('url', $name, array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>$field['label']));
 					break;
 
 					default:

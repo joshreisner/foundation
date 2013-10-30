@@ -87,6 +87,17 @@ class db {
 	  * Drop a table from the query builder
 	  *
 	  */
+	public function delete() {
+		if (empty(self::$table)) trigger_error('db::delete() must come after a db::table() statement');
+		$sql = 'DELETE FROM ' . self::$table;
+		if (!empty(self::$wheres)) $sql .= NEWLINE . 'WHERE' . NEWLINE . TAB . implode(' AND ' . NEWLINE . TAB, self::$wheres);
+		self::query($sql);
+	}
+
+	/**
+	  * Drop a table from the query builder
+	  *
+	  */
 	public function drop() {
 		if (empty(self::$table)) trigger_error('db::drop() must come after a db::table() statement');
 		self::query('DROP TABLE IF EXISTS ' . self::$table);
@@ -227,10 +238,10 @@ class db {
     	foreach ($inserts as $field=>$value) {
     		//if (self::field_exists(self::$table))
 	   		if (empty($value) && self::field_nullable(self::$table, $field)) $value = 'NULL';
-    		$fields[] = $field;
-    		$values[] = self::escape($value);
+    		$fields[] = NEWLINE . TAB . $field;
+    		$values[] = NEWLINE . TAB . self::escape($value);
     	}
-    	$sql = 'INSERT INTO ' . self::$table . ' ( ' . implode(', ', $fields) . ' ) VALUES ( ' . implode(',', $values) . ')';
+    	$sql = 'INSERT INTO ' . self::$table . ' (' . implode(',', $fields) . NEWLINE . ') VALUES (' . implode(',', $values) . NEWLINE . ')';
 		if (self::query($sql)) return self::$connection->lastInsertId();
 	}
 
@@ -287,6 +298,14 @@ class db {
 		}
 		$error = self::$connection->errorInfo();
 		trigger_error($error[2] . html::pre($sql));
+	}
+	
+	/**
+	  * Refresh the schema
+	  *
+	  */
+	public static function refresh() {
+		self::$schema = false;
 	}
 	
 	/**
@@ -384,6 +403,7 @@ class db {
 		//loop through updates and format
 		$fields = array();
     	foreach ($updates as $field=>$value) {
+    		if (is_array($value)) continue;
     		if (empty($value) && self::field_nullable(self::$table, $field)) $value = 'NULL';
    			$fields[] = NEWLINE . TAB . $field . ' = ' . self::escape($value);
     	}
