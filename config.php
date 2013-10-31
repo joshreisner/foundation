@@ -35,11 +35,37 @@ class config {
 		'viewport'			=> 'width=device-width, initial-scale=1.0',
 	);
 	
+	/**
+	  * Get a config variable
+	  *
+	  * @param	string	$key		The config variable's key
+	  * @return	mixed				The value of the config variable
+	  */
 	static function get($key, $required=false) {
 		if (!isset(self::$defaults[$key]) && $required) trigger_error('config::get() missing a required value for ' . html::strong($key) . '.  Please add this to your config file.');
 		return @self::$defaults[$key];
 	}
 	
+	/**
+	  * Compare or return machine name.
+	  * Note: Not sure why, but depending on network connection, the value may vary.  
+	  * Eg: Joshs-Laptop.local, Joshs and joshs-laptop
+	  *
+	  * @param	string	$compare	If specified, return boolean if matches
+	  * @return	mixed				Either boolean or the processed host name
+	  */
+	static function host($compare=false) {
+		$host = strtolower(php_uname('n'));
+		if ($pos = strpos($host, '.')) $host = substr($host, 0, $pos);
+		return ($compare) ? ($compare == $host) : $host;
+	}
+
+	/**
+	  * Set a config variable
+	  *
+	  * @param	string	$key		The config variable's key
+	  * @param	string	$value		The config variable's value
+	  */
 	static function set($key, $value) {
 		if (is_array($key)) {
 			self::$defaults = array_merge($key, self::$defaults);

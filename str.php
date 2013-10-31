@@ -62,15 +62,16 @@ class str {
 	  * See if $haystack ends in $needle
 	  * Todo: check if this is utf8 compatible
 	  *
-	  * @param	string	$haystack	The string to search in
-	  * @param	string	$needle		The string to search for
+	  * @param	string	$haystack			The string to search in
+	  * @param	string	$needle				The string to search for
+	  * @param	string	$return_if_false	What to return if no match
 	  * @return	mixed				If match found, returns remainder of string.  Otherwise false
 	  */
-	static function ends($haystack, $needle) {
+	static function ends($haystack, $needle, $return_if_false=false) {
 		if ($needle == $haystack) return true;
 		$length = strlen($needle);
 		if (strtolower(substr($haystack, (0 - $length))) == strtolower($needle)) return substr($haystack, 0, strlen($haystack) - $length);
-		return false;
+		return $return_if_false;
 	}
 
 	/**
@@ -136,15 +137,16 @@ class str {
 	  * See if $haystack starts with $needle
 	  * Todo: check if this is utf8 compatible
 	  *
-	  * @param	string	$haystack	The string to search in
-	  * @param	string	$needle		The string to search for
+	  * @param	string	$haystack			The string to search in
+	  * @param	string	$needle				The string to search for
+	  * @param	string	$return_if_false	What to return if no match
 	  * @return	mixed				If match found, returns remainder of string.  Otherwise false
 	  */
-	static function starts($haystack, $needle) {
+	static function starts($haystack, $needle, $return_if_false=false) {
 		if ($needle == $haystack) return true;
 		$length = strlen($needle);
 		if (strtolower(substr($haystack, 0, $length)) == strtolower($needle)) return substr($haystack, $length);
-		return false;
+		return $return_if_false;
 	}
 
 	/**

@@ -80,7 +80,7 @@ class db {
 	  * @return	string				Returns HTML formatted table of SQL queries
 	  */
 	static function debug() {
-		return html::dump(self::$queries);
+		return (self::$queries) ? html::dump(self::$queries) : 'self::$queries is empty';
 	}
 	
 	/**
