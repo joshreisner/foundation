@@ -235,12 +235,19 @@ class db {
 	function insert($inserts) {
 		if (empty(self::$table)) trigger_error('db::insert() must come after a db::table() statement');
 		$fields = $values = array();
+
+		//add metadata automatically
+		if (!isset($updates['updated']) && self::field_exists(self::$table, 'updated')) $inserts['updated'] = 'NOW()';
+		if (!isset($updates['updater']) && self::field_exists(self::$table, 'updater')) $inserts['updater'] = http::user();
+		if (!isset($updates['active'])  && self::field_exists(self::$table, 'active'))  $inserts['active']  = 1;
+
     	foreach ($inserts as $field=>$value) {
     		//if (self::field_exists(self::$table))
 	   		if (empty($value) && self::field_nullable(self::$table, $field)) $value = 'NULL';
     		$fields[] = NEWLINE . TAB . $field;
     		$values[] = NEWLINE . TAB . self::escape($value);
     	}
+
     	$sql = 'INSERT INTO ' . self::$table . ' (' . implode(',', $fields) . NEWLINE . ') VALUES (' . implode(',', $values) . NEWLINE . ')';
 		if (self::query($sql)) return self::$connection->lastInsertId();
 	}
