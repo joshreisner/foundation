@@ -415,12 +415,14 @@ class db {
 	  * @param	array	$fields		Associative array of fields to update
 	  * @return	int					Number of records affected
 	  */
-    public static function update($updates) {
+    public static function update($updates, $auto_meta=true) {
 		if (empty(self::$table)) trigger_error('db::update() must come after a db::table() statement');
 
     	//add metadata automatically, if fields are present
-		if (!isset($updates['updated']) && self::field_exists(self::$table, 'updated')) $updates['updated'] = 'NOW()';
-		if (!isset($updates['updater']) && self::field_exists(self::$table, 'updater')) $updates['updater'] = http::user();
+    	if ($auto_meta) {
+			if (!isset($updates['updated']) && self::field_exists(self::$table, 'updated')) $updates['updated'] = 'NOW()';
+			if (!isset($updates['updater']) && self::field_exists(self::$table, 'updater')) $updates['updater'] = http::user();
+    	}
 
 		//die(html::dump(self::fields(self::$table)));
 
