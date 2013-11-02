@@ -90,7 +90,7 @@ class db {
 	public function delete() {
 		if (empty(self::$table)) trigger_error('db::delete() must come after a db::table() statement');
 		$sql = 'DELETE FROM ' . self::$table;
-		if (!empty(self::$wheres)) $sql .= NEWLINE . 'WHERE' . NEWLINE . TAB . implode(' AND ' . NEWLINE . TAB, self::$wheres);
+		$sql .= sql_where();
 		self::query($sql);
 	}
 
@@ -294,6 +294,18 @@ class db {
 	}
 
 	/**
+	  * Specify an OR WHERE clause on the query builder
+	  *
+	  * @param	string	$field		The field to compare
+	  * @param	string	$operator	The operator to use
+	  * @param	int		$value		The value to compare
+	  * @return	object				Pass the query builder object up the chain
+	  */
+	public function or_where($field, $value=1, $operator='=') {
+		return self::where($field, $value, $operator, 'OR');
+	}
+
+	/**
 	  * Specify an ORDER BY param for your selects in the query builder
 	  *
 	  * @param	mixed	$fields		Comma-separated list of fields or array
@@ -359,10 +371,14 @@ class db {
 		foreach ($fields as &$field) $field = TAB . self::field($field);
 		$sql = 'SELECT ' . NEWLINE . implode(',' . NEWLINE, $fields) . NEWLINE . 'FROM ' . self::$table;
 		if (!empty(self::$joins)) $sql .= NEWLINE . implode(NEWLINE, self::$joins);
-		if (!empty(self::$wheres)) $sql .= NEWLINE . 'WHERE' . NEWLINE . TAB . implode(' AND ' . NEWLINE . TAB, self::$wheres);
+		$sql .= self::sql_where();
 		if (!empty(self::$order_by)) $sql .= NEWLINE . 'ORDER BY ' . NEWLINE . TAB . implode(', ' . NEWLINE . TAB, self::$order_by);
 		
 		return self::query($sql);
+	}
+
+	private static function sql_where() {
+		if (!empty(self::$wheres)) return NEWLINE . 'WHERE ' . implode(self::$wheres);
 	}
 	
 	/**
@@ -436,22 +452,27 @@ class db {
 
     	//assemble SQL query
     	$sql = 'UPDATE ' . self::$table . ' SET ' . implode(',', $fields);
-		if (!empty(self::$wheres)) $sql .= NEWLINE . 'WHERE' . NEWLINE . TAB . implode(' AND ' . NEWLINE . TAB, self::$wheres);
+    	$sql .= self::sql_where();
 
 		//execute and return
 		if (self::query($sql)) return self::$connection->rowCount();
     }
 
 	/**
-	  * Specify a where clause on the query builder
+	  * Specify a WHERE clause on the query builder
 	  *
 	  * @param	string	$field		The field to compare
 	  * @param	string	$operator	The operator to use
 	  * @param	int		$value		The value to compare
 	  * @return	object				Pass the query builder object up the chain
 	  */
-	public function where($field, $value=1, $operator='=') {
-		self::$wheres[] = self::field($field) . ' ' . $operator . ' ' . self::escape($value);
+	public function where($field, $value=1, $operator='=', $logical='AND') {
+		self::$wheres[] = NEWLINE . TAB . (count(self::$wheres) ? ' ' . $logical . ' ' : '') . self::field($field) . ' ' . $operator . ' ' . self::escape($value);
+		return $this;
+	}
+
+	public function where_null($field) {
+		self::where($field, 'NULL', 'IS');
 		return $this;
 	}
 }

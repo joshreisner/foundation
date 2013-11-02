@@ -210,7 +210,7 @@ class http {
 	  * @return	boolean	or string
 	  */
 	static function session($keys=false, $default=null) {
-		if (session_status() == PHP_SESSION_NONE) session_start();
+		if (!isset($_SESSION)) session_start();
 
 		if (!$keys) return (!empty($_SESSION)); //added for consistency with get and post, not sure if works
 
@@ -232,7 +232,7 @@ class http {
 	  * @return	int 				The returned ID, if not specified
 	  */
 	static function user($id=false) {
-		if (session_status() == PHP_SESSION_NONE) session_start();
+		if (!isset($_SESSION)) session_start();
 
 		if ($id) {
 			$_SESSION[config::get('session.user_id')] = $id;;
