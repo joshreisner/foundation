@@ -90,7 +90,7 @@ class db {
 	public function delete() {
 		if (empty(self::$table)) trigger_error('db::delete() must come after a db::table() statement');
 		$sql = 'DELETE FROM ' . self::$table;
-		$sql .= sql_where();
+		$sql .= self::sql_where();
 		self::query($sql);
 	}
 
@@ -110,7 +110,7 @@ class db {
 	  * @return	string				Returns escaped string
 	  */
 	static function escape($value) {
-		if (is_numeric($value) || $value == 'NULL' || (strstr($value, '(') && strstr($value, ')'))) {
+		if (is_numeric($value) || $value == 'NULL' || $value == 'NOW()') {
 			return $value;
 		}
 		return '\'' . str::escape($value) . '\'';
@@ -239,6 +239,10 @@ class db {
 		//add metadata automatically
 		if (!isset($updates['updated']) && self::field_exists(self::$table, 'updated')) $inserts['updated'] = 'NOW()';
 		if (!isset($updates['updater']) && self::field_exists(self::$table, 'updater')) $inserts['updater'] = http::user();
+		if (!isset($updates['precedence']) && self::field_exists(self::$table, 'precedence')) {
+			$obj = self::query('SELECT MAX(precedence) precedence FROM ' . self::$table);
+			$inserts['precedence'] = $obj[0]->precedence + 1;
+		}
 		if (!isset($updates['active'])  && self::field_exists(self::$table, 'active'))  $inserts['active']  = 1;
 
     	foreach ($inserts as $field=>$value) {
@@ -467,7 +471,16 @@ class db {
 	  * @return	object				Pass the query builder object up the chain
 	  */
 	public function where($field, $value=1, $operator='=', $logical='AND') {
-		self::$wheres[] = NEWLINE . TAB . (count(self::$wheres) ? ' ' . $logical . ' ' : '') . self::field($field) . ' ' . $operator . ' ' . self::escape($value);
+		
+		//escape or post-process value?
+		if (is_array($value)) {
+			foreach ($value as &$v) $v = self::escape($value);
+			$value = '(' . implode(',', $value) . ')';
+		} else {
+			$value = self::escape($value);
+		}
+
+		self::$wheres[] = NEWLINE . TAB . (count(self::$wheres) ? ' ' . $logical . ' ' : '') . self::field($field) . ' ' . $operator . ' ' . $value;
 		return $this;
 	}
 

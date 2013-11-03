@@ -276,7 +276,7 @@ class html {
 					break;
 
 					case 'email':
-					$field_args = array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>$field['label']);
+					$field_args = array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>strip_tags($field['label']));
 					if (!empty($field['autocomplete'])) $field_args['autocomplete'] = $field['autocomplete'];
 					$return = self::input('email', $name, $field_args);
 					break;
@@ -314,11 +314,11 @@ class html {
 					break;
 
 					case 'text':
-					$return = self::input('text', $name, array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>$field['label']));
+					$return = self::input('text', $name, array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>strip_tags($field['label'])));
 					break;
 
 					case 'textarea':
-					$return = self::textarea($field['value'], array('name'=>$name, 'class'=>$field['class'], 'placeholder'=>$field['label']));
+					$return = self::textarea($field['value'], array('name'=>$name, 'class'=>$field['class'], 'placeholder'=>strip_tags($field['label'])));
 					break;
 
 					case 'time':
@@ -327,7 +327,7 @@ class html {
 
 					case 'url':
 					case 'url-local':
-					$return = self::input('url', $name, array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>$field['label']));
+					$return = self::input('text', $name, array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>strip_tags($field['label'])));
 					break;
 
 					default:
