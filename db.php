@@ -473,7 +473,9 @@ class db {
 	public function where($field, $value=1, $operator='=', $logical='AND') {
 		
 		//escape or post-process value?
-		if (is_array($value)) {
+		if ($field == 'password') {
+			$value = 'PASSWORD(' . self::escape($value) . ')';
+		} elseif (is_array($value)) {
 			foreach ($value as &$v) $v = self::escape($value);
 			$value = '(' . implode(',', $value) . ')';
 		} else {
