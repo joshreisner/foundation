@@ -2,6 +2,9 @@
 
 class mail {
 	
+	protected $body = '';
+	protected $subject = '';
+
 	function body($content) {
 		$this->body = $content;
 		return $this;
@@ -13,16 +16,24 @@ class mail {
 
 	function send() {
 		if (!isset($this->to))		$this->to(config::get('mail.to', true));
-		if (!isset($this->subject)) $this->subject = '';
-		if (!isset($this->body))	$this->body = '';
+		if (!isset($this->replyTo))	$this->replyTo = config::get('mail.from', true);
 
 		foreach ($this->to as $to) {
-			$result = mail($to, $this->subject, $this->body, 
-				'From: ' . config::get('mail.from', true) . NEWLINE .
-    			'Reply-To: ' . config::get('mail.from', true) . NEWLINE .
-    			'X-Mailer: PHP/' . phpversion()
-    		);
+			$result = mail($to, $this->subject, $this->body, implode(NEWLINE, array(
+				'MIME-Version: 1.0',
+				'Content-type: text/html; charset=' . config::get('charset'),
+				'From: ' . config::get('mail.from', true),
+    			'Reply-To: ' . $this->replyTo,
+    			'X-Mailer: PHP/' . phpversion(),
+    		)));
 		}
+
+		return true;
+	}
+
+	function replyTo($address) {
+		$this->replyTo = $address;
+		return $this;
 	}
 
 	function subject($subject) {

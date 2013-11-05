@@ -24,6 +24,23 @@ class http {
 	}
 
 	/**
+	  * Send a content-type header
+	  *
+	  * @param	string 	$type		The content type to send
+	  */
+	static function content_type($type) {
+		$types = array(
+			'html'	=> 'text/html',
+			'xml'	=> 'application/xml',
+		);
+
+		if (!isset($types[$type])) error_handle('content::type called for unhandled type ' . $type);
+
+		if (!headers_sent()) header('Content-type: ' . $types[$type] . '; charset=' . config::get('charset', true));
+	}
+
+
+	/**
 	  * Get or set a cookie
 	  *
 	  * @param	string	$key	The name of the cookie
