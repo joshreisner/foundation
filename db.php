@@ -249,7 +249,11 @@ class db {
     		//if (self::field_exists(self::$table))
 	   		if (empty($value) && self::field_nullable(self::$table, $field)) $value = 'NULL';
     		$fields[] = NEWLINE . TAB . $field;
-    		$values[] = NEWLINE . TAB . self::escape($value);
+    		if ($field == 'password') {
+	    		$values[] = NEWLINE . TAB . 'PASSWORD(' . self::escape($value) . ')';
+    		} else {
+	    		$values[] = NEWLINE . TAB . self::escape($value);    			
+    		}
     	}
 
     	$sql = 'INSERT INTO ' . self::$table . ' (' . implode(',', $fields) . NEWLINE . ') VALUES (' . implode(',', $values) . NEWLINE . ')';
@@ -450,8 +454,13 @@ class db {
 		$fields = array();
     	foreach ($updates as $field=>$value) {
     		if (is_array($value)) continue;
-    		if (empty($value) && self::field_nullable(self::$table, $field)) $value = 'NULL';
-   			$fields[] = NEWLINE . TAB . $field . ' = ' . self::escape($value);
+
+    		if ($field == 'password') {
+	   			$fields[] = NEWLINE . TAB . $field . ' = PASSWORD(' . self::escape($value) . ')';
+    		} else {
+	    		if (empty($value) && self::field_nullable(self::$table, $field)) $value = 'NULL';
+	   			$fields[] = NEWLINE . TAB . $field . ' = ' . self::escape($value);
+    		}
     	}
 
     	//assemble SQL query

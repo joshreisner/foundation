@@ -29,6 +29,8 @@ class config {
 		'form.save'			=> 'Save Changes',
 		'js.shortcuts'		=> array('jquery'=>'//code.jquery.com/jquery-latest.js', 'bootstrap'=>'//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js'),
 		'language'			=> 'en',
+		'mail.from'			=> false,
+		'mail.to'			=> false,
 		'session.user_id'	=> 'user_id',
 		'time.format'		=> '%l:%M %p',
 		'time.zone'			=> 'America/New_York',

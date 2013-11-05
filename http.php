@@ -187,6 +187,7 @@ class http {
 			self::$request = $protocol . '://' . $_SERVER['SERVER_NAME'] . $port . $_SERVER['REQUEST_URI'];
 		}
 		$return = self::parse(self::$request);
+		//echo html::dump($return);
 		return (isset($return[$part])) ? $return[$part] : false;
 	}
 	
