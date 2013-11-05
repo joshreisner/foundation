@@ -5,7 +5,7 @@ ini_set('display_errors', 1);
 
 //include other library files
 $directory = dirname(__file__) . '/';
-$libraries = array('a', 'config', 'db', 'error', 'file', 'html', 'http', 'str');
+$libraries = array('a', 'config', 'db', 'error', 'file', 'html', 'http', 'mail', 'str');
 foreach ($libraries as $library) require_once($directory . $library . '.php');
 
 //set custom error handlers
@@ -20,7 +20,7 @@ date_default_timezone_set(config::get('time.zone'));
 
 //convenience constants
 if (!defined('TAB'))		define('TAB', 		"\t");
-if (!defined('NEWLINE'))	define('NEWLINE',	"\n");
+if (!defined('NEWLINE'))	define('NEWLINE',	"\r\n");
 if (!defined('BR'))			define('BR', 		'<br>');
 
 //clean up
