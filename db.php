@@ -7,11 +7,11 @@ class db {
 	private static $schema		= false;
 	private static $queries		= array();
 
-	//query builder vars, reset with every call to table()
-	private static $table 		= false;
-	private static $wheres		= array();
-	private static $joins		= array();
-	private static $order_by	= array();
+	//query builder vars
+	private $table 		= false;
+	private $wheres		= array();
+	private $joins		= array();
+	private $order_by	= array();
 
 	/**
 	  * Make an associative array from resultset
@@ -19,9 +19,9 @@ class db {
 	  * Make sure your first element is unique, or you will get interesting results!
 	  * 
 	  */
-	static function associate() {
+	public function associate() {
 		$selects = a::arguments(func_get_args());
-		if (!$result = self::select($selects)) return $result;
+		if (!$result = $this->select($selects)) return $result;
 		$return = array();
 		$keys 	= array_keys(get_object_vars($result[0])); //eg 'id', 'title', 'description', 'active'
 		$key 	= array_shift($keys); //eg 'id' or 'title'
@@ -52,7 +52,7 @@ class db {
 	  * Sets the local cache variable $connection to a database resource handle or throws and error
 	  * 
 	  */
-	static function connect() {
+	private static function connect() {
 		if (is_object(self::$connection)) return;
 		
 		try {
@@ -79,7 +79,7 @@ class db {
 	  *
 	  * @return	string				Returns HTML formatted table of SQL queries
 	  */
-	static function debug() {
+	public static function debug() {
 		return (self::$queries) ? html::dump(self::$queries) : 'self::$queries is empty';
 	}
 	
@@ -88,9 +88,9 @@ class db {
 	  *
 	  */
 	public function delete() {
-		if (empty(self::$table)) trigger_error('db::delete() must come after a db::table() statement');
-		$sql = 'DELETE FROM ' . self::$table;
-		$sql .= self::sql_where();
+		if (empty($this->table)) trigger_error('db::delete() must come after a db::table() statement');
+		$sql = 'DELETE FROM ' . $this->table;
+		$sql .= self::sql_where($this->wheres);
 		self::query($sql);
 	}
 
@@ -99,9 +99,9 @@ class db {
 	  *
 	  */
 	public function drop() {
-		if (empty(self::$table)) trigger_error('db::drop() must come after a db::table() statement');
-		self::query('DROP TABLE IF EXISTS ' . self::$table);
-		self::$table = false;
+		if (empty($this->table)) trigger_error('db::drop() must come after a db::table() statement');
+		self::query('DROP TABLE IF EXISTS ' . $this->table);
+		$this->table = false;
 	}
 
 	/**
@@ -109,7 +109,7 @@ class db {
 	  *
 	  * @return	string				Returns escaped string
 	  */
-	static function escape($value) {
+	private static function escape($value) {
 		if (is_numeric($value) || $value == 'NULL' || $value == 'NOW()') {
 			return $value;
 		}
@@ -119,10 +119,10 @@ class db {
 	/**
 	  * Format field name for non-ambiguity
 	  *
-	  * @return	string				Returns escaped string
+	  * @return	string
 	  */
-	static function field($field) {
-		if (!strstr($field, '.')) $field = self::$table . '.' . $field;
+	private static function field($field, $table) {
+		if (!strstr($field, '.')) $field = $table . '.' . $field;
 		return $field;
 	}
 
@@ -206,8 +206,8 @@ class db {
 	  * @param	int		$id	ID
 	  * @return	object			Passing the object up the chain
 	  */
-	function find($id) {
-		if (empty(self::$table)) trigger_error('db::find() must come after a db::table() statement');
+	public function find($id) {
+		if (empty($this->table)) trigger_error('db::find() must come after a db::table() statement');
 
 		self::where('id', $id);
 		return $this;
@@ -219,9 +219,10 @@ class db {
 	  * @param	string	$fields	Any number of field names
 	  * @return	mixed				Returns an object-resultset or null
 	  */
-	function first() {
+	public function first() {
+		if (!is_object($this)) trigger_error('db::select must be called in object context');
 		$fields = a::arguments(func_get_args());
-		$result = self::select($fields);
+		$result = $this->select($fields);
 		if (!count($result)) return false;
 		return array_shift($result);
 	}
@@ -232,22 +233,22 @@ class db {
 	  * @param	string	$selects	Any amount of field names
 	  * @return	mixed				Returns an object-resultset or null
 	  */
-	function insert($inserts) {
-		if (empty(self::$table)) trigger_error('db::insert() must come after a db::table() statement');
+	public function insert($inserts) {
+		if (empty($this->table)) trigger_error('db::insert() must come after a db::table() statement');
 		$fields = $values = array();
 
 		//add metadata automatically
-		if (!isset($updates['updated']) && self::field_exists(self::$table, 'updated')) $inserts['updated'] = 'NOW()';
-		if (!isset($updates['updater']) && self::field_exists(self::$table, 'updater')) $inserts['updater'] = http::user();
-		if (!isset($updates['precedence']) && self::field_exists(self::$table, 'precedence')) {
-			$obj = self::query('SELECT MAX(precedence) precedence FROM ' . self::$table);
+		if (!isset($updates['updated']) && self::field_exists($this->table, 'updated')) $inserts['updated'] = 'NOW()';
+		if (!isset($updates['updater']) && self::field_exists($this->table, 'updater')) $inserts['updater'] = http::user();
+		if (!isset($updates['precedence']) && self::field_exists($this->table, 'precedence')) {
+			$obj = self::query('SELECT MAX(precedence) precedence FROM ' . $this->table);
 			$inserts['precedence'] = $obj[0]->precedence + 1;
 		}
-		if (!isset($updates['active'])  && self::field_exists(self::$table, 'active'))  $inserts['active']  = 1;
+		if (!isset($updates['active'])  && self::field_exists($this->table, 'active'))  $inserts['active']  = 1;
 
     	foreach ($inserts as $field=>$value) {
-    		//if (self::field_exists(self::$table))
-	   		if (empty($value) && self::field_nullable(self::$table, $field)) $value = 'NULL';
+    		//if (self::field_exists($this->table))
+	   		if (empty($value) && self::field_nullable($this->table, $field)) $value = 'NULL';
     		$fields[] = NEWLINE . TAB . $field;
     		if ($field == 'password') {
 	    		$values[] = NEWLINE . TAB . 'PASSWORD(' . self::escape($value) . ')';
@@ -256,7 +257,7 @@ class db {
     		}
     	}
 
-    	$sql = 'INSERT INTO ' . self::$table . ' (' . implode(',', $fields) . NEWLINE . ') VALUES (' . implode(',', $values) . NEWLINE . ')';
+    	$sql = 'INSERT INTO ' . $this->table . ' (' . implode(',', $fields) . NEWLINE . ') VALUES (' . implode(',', $values) . NEWLINE . ')';
 		if (self::query($sql)) return self::$connection->lastInsertId();
 	}
 
@@ -267,8 +268,8 @@ class db {
 	  * @param	string			The connection statement, eg table1.id = table2.table1_id
 	  * @return	object			Passing the object up the chain
 	  */
-	function join($table, $connection) {
-		self::$joins[] = 'JOIN ' . $table . ' ON ' . $connection;
+	public function join($table, $connection) {
+		$this->joins[] = 'JOIN ' . $table . ' ON ' . $connection;
 		return $this;
 	}
 	
@@ -280,7 +281,7 @@ class db {
 	  * @return	object			Passing the object up the chain
 	  */
 	function left_join($table, $connection) {
-		self::$joins[] = 'LEFT JOIN ' . $table . ' ON ' . $connection;
+		$this->joins[] = 'LEFT JOIN ' . $table . ' ON ' . $connection;
 		return $this;
 	}
 	
@@ -290,8 +291,8 @@ class db {
 	  * @return	array				One-dimensional array
 	  * 
 	  */
-	static function lists($field) {
-		if (!$result = self::select($field)) return $result;
+	public static function lists($field) {
+		if (!$result = $this->select($field)) return $result;
 		$return = array();
 		$keys 	= array_keys(get_object_vars($result[0])); //eg 'id', 'title', 'description', 'active'
 		$key 	= array_shift($keys); //eg 'id' or 'title'
@@ -310,7 +311,7 @@ class db {
 	  * @return	object				Pass the query builder object up the chain
 	  */
 	public function or_where($field, $value=1, $operator='=') {
-		return self::where($field, $value, $operator, 'OR');
+		return $this->where($field, $value, $operator, 'OR');
 	}
 
 	/**
@@ -320,10 +321,10 @@ class db {
 	  * @return	object				Passing the object up the chain
 	  */
 	public function order_by($fields) {
-		if (empty(self::$table)) trigger_error('db::order_by() must come after a db::table() statement');
+		if (empty($this->table)) trigger_error('db::order_by() must come after a db::table() statement');
 		if (!is_array($fields)) $fields = a::separated($fields);
-		foreach ($fields as &$field) $field = self::field($field);
-		self::$order_by = array_merge(self::$order_by, $fields);
+		foreach ($fields as &$field) $field = self::field($field, $this->table);
+		$this->order_by = array_merge($this->order_by, $fields);
 		return $this;
 	}
 
@@ -359,8 +360,8 @@ class db {
 	  * @return	object				Passing the object up the chain
 	  */
 	public function rename($new_name) {
-		if (empty(self::$table)) trigger_error('db::rename() must come after a db::table() statement');
-		if (self::table_exists(self::$table)) self::query('RENAME TABLE ' . self::$table . ' TO ' . $new_name);
+		if (empty($this->table)) trigger_error('db::rename() must come after a db::table() statement');
+		if (self::table_exists($this->table)) self::query('RENAME TABLE ' . $this->table . ' TO ' . $new_name);
 		//todo check if new table exists and if so, rename new_name to
 		self::table($new_name);
 		return $this;
@@ -371,22 +372,30 @@ class db {
 	  *
 	  * @param	string	$selects	Any number of field names
 	  */
-	public static function select() {
+	public function select() {
 		$fields = a::arguments(func_get_args());
 		if (empty($fields)) $fields = array('*');
 
+		if (!isset($this) || !is_object($this)) trigger_error('db::select must be called in object context, eg $result = db::table(\'tablename\')->select()');
+
 		//build query
-		foreach ($fields as &$field) $field = TAB . self::field($field);
-		$sql = 'SELECT ' . NEWLINE . implode(',' . NEWLINE, $fields) . NEWLINE . 'FROM ' . self::$table;
-		if (!empty(self::$joins)) $sql .= NEWLINE . implode(NEWLINE, self::$joins);
-		$sql .= self::sql_where();
-		if (!empty(self::$order_by)) $sql .= NEWLINE . 'ORDER BY ' . NEWLINE . TAB . implode(', ' . NEWLINE . TAB, self::$order_by);
+		foreach ($fields as &$field) $field = TAB . self::field($field, $this->table);
+		$sql = 'SELECT ' . NEWLINE . implode(',' . NEWLINE, $fields) . NEWLINE . 'FROM ' . $this->table;
+		if (!empty($this->joins)) $sql .= NEWLINE . implode(NEWLINE, $this->joins);
+		$sql .= self::sql_where($this->wheres);
+		if (!empty($this->order_by)) $sql .= NEWLINE . 'ORDER BY ' . NEWLINE . TAB . implode(', ' . NEWLINE . TAB, $this->order_by);
 		
 		return self::query($sql);
 	}
 
-	private static function sql_where() {
-		if (!empty(self::$wheres)) return NEWLINE . 'WHERE ' . implode(self::$wheres);
+	/**
+	  * Construct SQL statement for WHEREs (I don't like the name of this function)
+	  *
+	  * @param	array	$wheres		Must be passed in, because not in object context
+	  * @return	string				SQL
+	  */
+	private static function sql_where($wheres) {
+		if (!empty($wheres)) return NEWLINE . 'WHERE ' . implode($wheres);
 	}
 	
 	/**
@@ -397,9 +406,9 @@ class db {
 	  */
     public static function table($table) {
     	//todo decide on whether to check if exists, what to do if not
-		self::$wheres = self::$joins  = self::$order_by = array(); //clear out old queries
-		self::$table = $table;
-		return new self;
+		$return = new self;
+		$return->table = $table;
+		return $return;
     }
 
 	/**
@@ -440,15 +449,15 @@ class db {
 	  * @return	int					Number of records affected
 	  */
     public static function update($updates, $auto_meta=true) {
-		if (empty(self::$table)) trigger_error('db::update() must come after a db::table() statement');
+		if (empty($this->table)) trigger_error('db::update() must come after a db::table() statement');
 
     	//add metadata automatically, if fields are present
     	if ($auto_meta) {
-			if (!isset($updates['updated']) && self::field_exists(self::$table, 'updated')) $updates['updated'] = 'NOW()';
-			if (!isset($updates['updater']) && self::field_exists(self::$table, 'updater')) $updates['updater'] = http::user();
+			if (!isset($updates['updated']) && self::field_exists($this->table, 'updated')) $updates['updated'] = 'NOW()';
+			if (!isset($updates['updater']) && self::field_exists($this->table, 'updater')) $updates['updater'] = http::user();
     	}
 
-		//die(html::dump(self::fields(self::$table)));
+		//die(html::dump(self::fields($this->table)));
 
 		//loop through updates and format
 		$fields = array();
@@ -458,14 +467,14 @@ class db {
     		if ($field == 'password') {
 	   			$fields[] = NEWLINE . TAB . $field . ' = PASSWORD(' . self::escape($value) . ')';
     		} else {
-	    		if (empty($value) && self::field_nullable(self::$table, $field)) $value = 'NULL';
+	    		if (empty($value) && self::field_nullable($this->table, $field)) $value = 'NULL';
 	   			$fields[] = NEWLINE . TAB . $field . ' = ' . self::escape($value);
     		}
     	}
 
     	//assemble SQL query
-    	$sql = 'UPDATE ' . self::$table . ' SET ' . implode(',', $fields);
-    	$sql .= self::sql_where();
+    	$sql = 'UPDATE ' . $this->table . ' SET ' . implode(',', $fields);
+    	$sql .= self::sql_where($this->wheres);
 
 		//execute and return
 		if (self::query($sql)) return self::$connection->rowCount();
@@ -491,7 +500,8 @@ class db {
 			$value = self::escape($value);
 		}
 
-		self::$wheres[] = NEWLINE . TAB . (count(self::$wheres) ? ' ' . $logical . ' ' : '') . self::field($field) . ' ' . $operator . ' ' . $value;
+		$this->wheres[] = NEWLINE . TAB . (count($this->wheres) ? ' ' . $logical . ' ' : '') . self::field($field, $this->table) . ' ' . $operator . ' ' . $value;
+		
 		return $this;
 	}
 
