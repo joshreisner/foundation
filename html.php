@@ -197,7 +197,7 @@ class html {
 			if (is_string($var)) {
 				return $var;
 			} elseif (is_numeric($var)) {
-				return 'numeric';
+				return $var;
 			} elseif (is_bool($var)) {
 				return ($var) ? 'true' : 'false';
 			} else {
@@ -213,7 +213,7 @@ class html {
 					return $return . '</table>';
 				} else {
 					foreach ($var as &$value) $value = self::dump($value);
-					return self::ul($var);
+					return self::ol($var);
 				}
 			} elseif (is_object($var)) {
 				return 'object' . self::dump(a::object($var));

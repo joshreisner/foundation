@@ -61,7 +61,7 @@ class db {
 				config::get('db.user'), 
 				config::get('db.password'), 
 				array(
-					PDO::ATTR_ERRMODE				=>PDO::ERRMODE_SILENT,
+					PDO::ATTR_ERRMODE				=>PDO::ERRMODE_WARNING,
 					PDO::MYSQL_ATTR_INIT_COMMAND	=>'SET NAMES ' . self::charset(),
 					PDO::ATTR_PERSISTENT			=>true,
 				)
@@ -80,7 +80,9 @@ class db {
 	  * @return	string				Returns HTML formatted table of SQL queries
 	  */
 	public static function debug() {
-		return (self::$queries) ? html::dump(self::$queries) : 'self::$queries is empty';
+		$queries = self::$queries;
+		foreach ($queries as &$query) $query = html::pre($query);
+		return ($queries) ? html::dump($queries) : 'self::$queries is empty';
 	}
 	
 	/**
@@ -258,7 +260,8 @@ class db {
     	}
 
     	$sql = 'INSERT INTO ' . $this->table . ' (' . implode(',', $fields) . NEWLINE . ') VALUES (' . implode(',', $values) . NEWLINE . ')';
-		if (self::query($sql)) return self::$connection->lastInsertId();
+		
+		return self::query($sql);
 	}
 
 	/**
@@ -329,18 +332,27 @@ class db {
 	}
 
 	/**
-	  * Run a raw query.  Private for security (temporarily public)
+	  * Run a raw or prepared query.
 	  *
 	  * @param	string	$sql		Raw SQL to be executed
+	  * @param	array	$bindings	Optional value bindings for your query
 	  * @return	array				An array of results
 	  */
-	public static function query($sql) {
+	public static function query($sql, $bindings=null) {
 		self::connect();
-		if ($result = self::$connection->query($sql, PDO::FETCH_OBJ)) {
-			//successful query
+
+		$result = self::$connection->prepare($sql);
+
+		if ($result->execute($bindings)) {
+			//success
 			self::$queries[] = $sql;
-			return $result->fetchAll();
+			$verb = trim(strtoupper(substr($sql, 0, strpos($sql, ' '))));
+			if (in_array($verb, array('SELECT', 'SHOW'))) return $result->fetchAll(PDO::FETCH_OBJ);
+			if ($verb == 'INSERT') return self::$connection->lastInsertId();
+			return true;
 		}
+
+		//fail
 		$error = self::$connection->errorInfo();
 		trigger_error($error[2] . html::pre($sql));
 	}
@@ -380,7 +392,7 @@ class db {
 
 		//build query
 		foreach ($fields as &$field) $field = TAB . self::field($field, $this->table);
-		$sql = 'SELECT ' . NEWLINE . implode(',' . NEWLINE, $fields) . NEWLINE . 'FROM ' . $this->table;
+		$sql = 'SELECT ' . NEWLINE . implode(',' . NEWLINE, $fields) . NEWLINE . 'FROM' . NEWLINE . TAB . $this->table;
 		if (!empty($this->joins)) $sql .= NEWLINE . implode(NEWLINE, $this->joins);
 		$sql .= self::sql_where($this->wheres);
 		if (!empty($this->order_by)) $sql .= NEWLINE . 'ORDER BY ' . NEWLINE . TAB . implode(', ' . NEWLINE . TAB, $this->order_by);
@@ -448,7 +460,7 @@ class db {
 	  * @param	array	$fields		Associative array of fields to update
 	  * @return	int					Number of records affected
 	  */
-    public static function update($updates, $auto_meta=true) {
+    public function update($updates, $auto_meta=true) {
 		if (empty($this->table)) trigger_error('db::update() must come after a db::table() statement');
 
     	//add metadata automatically, if fields are present
@@ -473,11 +485,11 @@ class db {
     	}
 
     	//assemble SQL query
-    	$sql = 'UPDATE ' . $this->table . ' SET ' . implode(',', $fields);
+    	$sql = 'UPDATE' . NEWLINE . TAB . $this->table . NEWLINE . 'SET ' . implode(',', $fields);
     	$sql .= self::sql_where($this->wheres);
 
 		//execute and return
-		if (self::query($sql)) return self::$connection->rowCount();
+		return self::query($sql);
     }
 
 	/**
