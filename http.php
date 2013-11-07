@@ -5,7 +5,7 @@
  * 
  * Methods for the location bar and cookies
  * 
- * @package Joshlib
+ * @package Foundation
  */
 
 class http {

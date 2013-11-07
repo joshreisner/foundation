@@ -1,4 +1,14 @@
 <?php
+/**
+ * 
+ * FILE
+ * 
+ * Methods for working with files (and the filesystem)
+ *
+ * 
+ * @package Foundation
+ */
+
 
 class file {
 
@@ -11,4 +21,5 @@ class file {
 			return array_diff(scandir($path), $skip);
 		}
 	}
+
 }

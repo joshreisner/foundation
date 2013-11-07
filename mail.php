@@ -1,4 +1,12 @@
 <?php
+/**
+ * 
+ * MAIL
+ * 
+ * Very simple, lightweight email builder, similar to SwiftMailer
+ *
+ * @package Foundation
+ */
 
 class mail {
 	

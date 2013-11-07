@@ -4,9 +4,8 @@
  * A
  * 
  * Methods for working with arrays
- * Todo: figure out if there's any way to use the PHP-reserved word "array" for these
  * 
- * @package Joshlib
+ * @package Foundation
  */
 
 class a {

@@ -1,4 +1,12 @@
 <?php
+/**
+ * 
+ * Welcome to Foundation!
+ * 
+ * https://github.com/joshreisner/foundation
+ *
+ * @package Foundation
+ */
 
 //turn on error reporting
 ini_set('display_errors', 1);
@@ -11,7 +19,7 @@ foreach ($libraries as $library) require_once($directory . $library . '.php');
 //set custom error handlers
 set_error_handler(array('error', 'handle'));
 
-//set configuration in two ways: $config variable and config file
+//set configuration in two ways: $config variable and/or /config.php file
 if (!empty($config)) config::set($config);
 if (file_exists($_SERVER['DOCUMENT_ROOT'] . '/' . config::get('config.file'))) require_once($_SERVER['DOCUMENT_ROOT'] . '/' . config::get('config.file'));
 

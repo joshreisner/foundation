@@ -8,24 +8,21 @@
  * One of the key params you'll see over and over in this class is the $arguments class.  This can be either a string 
  * or an associative array.  If an array, keys are arguments such as class=>foo, id=>bar, width=>12.  If a string, it's
  * assumed to be a class unless prepended with a #, in which case it's an id.  
- * self::div('#foo') becomes <div id="foo"></div>
- * self::div('bar') becomes <div class="bar"></div>
- * self::div(array('id'=>'foo', 'class'=>'bar)) becomes <div id="foo" class="bar"></div>
+ * html::div('#foo') becomes <div id="foo"></div>
+ * html::div('bar') becomes <div class="bar"></div>
+ * html::div(array('id'=>'foo', 'class'=>'bar)) becomes <div id="foo" class="bar"></div>
  *
  * Order of arguments is a tricky thing, and consistency is balanced against utility.  "Generic containers" are available for
- * all the tags in the $generic_containers array, and are in the format self::h1($content, $arguments) 
+ * all the tags in the $generic_containers array, and are in the format html::h1($content, $arguments) 
  * A notable exception are <div>s, which are reversed so they can be used in constructions where it's helpful to have the arguments
- * near the tag
- * self::div('classname',
- * 		self::h1('Here is a content title') . 
- * 		self::p('Here is an intro paragraph', 'intro') . 
- *		self::p('Here is another paragraph')
+ * at the top, near the tag name eg:
+ * html::div('classname',
+ * 		html::h1('Here is a content title') . 
+ * 		html::p('Here is an intro paragraph', 'intro') . 
+ *		html::p('Here is another paragraph')
  * );
- *
- * Todo: research whether there's a way to define the generic container functions from within a repeat loop, either that, or
- * do a catch-all function?  These are: 
  * 
- * @package Joshlib
+ * @package Foundation
  */
 
 class html {

@@ -6,7 +6,7 @@
  * Methods for getting and setting config values
  * Don't edit this file!  Use config::set() in your local site config file to override these values
  *
- * @package Joshlib
+ * @package Foundation
  */
 
 class config {
@@ -65,11 +65,11 @@ class config {
 	/**
 	  * Set a config variable
 	  *
-	  * @param	string	$key		The config variable's key
-	  * @param	string	$value		The config variable's value
+	  * @param	mixed	$key		The config variable's key, or an associative array of key/value pairs
+	  * @param	string	$value		The config variable's value (optional)
 	  */
-	static function set($key, $value) {
-		if (is_array($key)) {
+	static function set($key, $value=false) {
+		if (a::associative($key)) {
 			self::$defaults = array_merge($key, self::$defaults);
 		} else {
 			self::$defaults[$key] = $value;

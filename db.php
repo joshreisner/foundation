@@ -1,4 +1,13 @@
 <?php
+/**
+ * 
+ * DB
+ * 
+ * Methods for working with the database.  Contains a Laravel-esque query builder
+ *
+ * 
+ * @package Foundation
+ */
 
 class db {
 

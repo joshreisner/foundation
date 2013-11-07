@@ -1,12 +1,12 @@
 <?php
 /**
  * 
- * Error
+ * ERROR
  * 
  * Methods for dealing with errors
  *
  * 
- * @package Joshlib
+ * @package Foundation
  */
 
 class error {
@@ -132,4 +132,5 @@ class error {
 		//don't execute PHP internal error handler, todo test if necessary
 		return true;
 	}
+	
 }

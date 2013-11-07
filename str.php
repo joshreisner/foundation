@@ -4,9 +4,8 @@
  * STR
  * 
  * Methods for string manipulation
- * Todo: figure out if there's any way to use the PHP-reserved word "string" for these
  * 
- * @package Joshlib
+ * @package Foundation
  */
 
 class str {
