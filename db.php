@@ -294,7 +294,7 @@ class db {
 	  * @return	array				One-dimensional array
 	  * 
 	  */
-	public static function lists($field) {
+	public function lists($field) {
 		if (!$result = $this->select($field)) return $result;
 		$return = array();
 		$keys 	= array_keys(get_object_vars($result[0])); //eg 'id', 'title', 'description', 'active'
