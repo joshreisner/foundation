@@ -24,7 +24,7 @@ However, if you want to get fancy, you can have your site look for Foundation dy
 	}
 
 ### Config
-There are two basic ways of configuration.  The first, easiest, most common way is to create a file in your document root called config.php and add some config statements to it.  Foundation will automatically scan for a file at /config.php and include it if it's there.  (Just remember to exclude it from version control!)
+There are two basic ways of configuring Foundation.  The first, easiest, most common way is to create a file in your document root called config.php and add some config statements to it.  Foundation will automatically scan for a file at /config.php and include it if it's there.  (Just remember to exclude it from version control!)
 
 	<?php
 	
@@ -60,7 +60,7 @@ Foundation comes with a database query builder with Laravel-esque syntax:
 		->where('active')
 		->order_by('precedence')
 		->join('sections', 'section_id = sections.id')
-		->select('title', 'content', 'sections.title section')
+		->select('title', 'content', 'sections.title section');
 		
 	foreach ($pages as $page) {
 		echo $page->title . ' (' . $page->section . ')';

@@ -31,10 +31,12 @@ class str {
 	  * @param	boolean	$relative 	If today, return time
 	  * @return	string				The formatted date string
 	  */
-	static function date($timestamp, $relative=true, $format=false) {
+	static function date($timestamp=false, $relative=true, $format=false) {
 		if (empty($timestamp)) return null;
 		if (!is_int($timestamp)) $timestamp = strtotime($timestamp);
-		if ($format == 'sql') return date('Y-m-d H:i:00', $timestamp);
+		
+		$timestamp += (int)substr(date('O'), 0, 3) * 60 * 60; 
+
 		if ($relative && (date('Y-m-d') == date('Y-m-d', $timestamp))) {
 			//show time for dates that are today
 			if (!$format) $format = config::get('time.format');

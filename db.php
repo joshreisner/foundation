@@ -121,9 +121,7 @@ class db {
 	  * @return	string				Returns escaped string
 	  */
 	private static function escape($value) {
-		if (is_numeric($value) || $value == 'NULL' || $value == 'NOW()') {
-			return $value;
-		}
+		if (is_numeric($value) || $value == 'NULL') return $value;
 		return '\'' . str::escape($value) . '\'';
 	}
 	
@@ -249,7 +247,7 @@ class db {
 		$fields = $values = array();
 
 		//add metadata automatically
-		if (!isset($updates['updated']) && self::field_exists($this->table, 'updated')) $inserts['updated'] = 'NOW()';
+		if (!isset($updates['updated']) && self::field_exists($this->table, 'updated')) $inserts['updated'] = self::now();
 		if (!isset($updates['updater']) && self::field_exists($this->table, 'updater')) $inserts['updater'] = http::user();
 		if (!isset($updates['precedence']) && self::field_exists($this->table, 'precedence')) {
 			$obj = self::query('SELECT MAX(precedence) precedence FROM ' . $this->table);
@@ -312,6 +310,16 @@ class db {
 			$return[] = $row->{$key};
 		}
 		return $return;
+	}
+
+	/**
+	  * Current timestamp, adjusted for timezone
+	  * @return	string				SQL-formatted time
+	  * 
+	  */
+	public static function now() {
+		$gmtimenow = time() - (int)substr(date('O'), 0, 3) * 60 * 60; 
+		return date('Y-m-d H:i:s', $gmtimenow);
 	}
 
 	/**
@@ -474,7 +482,7 @@ class db {
 
     	//add metadata automatically, if fields are present
     	if ($auto_meta) {
-			if (!isset($updates['updated']) && self::field_exists($this->table, 'updated')) $updates['updated'] = 'NOW()';
+			if (!isset($updates['updated']) && self::field_exists($this->table, 'updated')) $updates['updated'] = self::now();
 			if (!isset($updates['updater']) && self::field_exists($this->table, 'updater')) $updates['updater'] = http::user();
     	}
 
@@ -515,7 +523,7 @@ class db {
 		if ($field == 'password') {
 			$value = 'PASSWORD(' . self::escape($value) . ')';
 		} elseif (is_array($value)) {
-			foreach ($value as &$v) $v = self::escape($value);
+			foreach ($value as &$v) $v = self::escape($v);
 			$value = '(' . implode(',', $value) . ')';
 		} else {
 			$value = self::escape($value);
