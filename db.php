@@ -84,6 +84,17 @@ class db {
 	}
 
 	/**
+	  * Query builder COUNT(*) function
+	  * 
+	  */
+	public function count() {
+		if (empty($this->table)) trigger_error('db::count() must come after a db::table() statement');
+		$sql = 'SELECT COUNT(*) FROM ' . $this->table;
+		$sql .= self::sql_where($this->wheres);
+		return self::query($sql);
+	}
+
+	/**
 	  * Show all the queries that have been run so far
 	  *
 	  * @return	string				Returns HTML formatted table of SQL queries
@@ -168,8 +179,7 @@ class db {
 	public static function field_rename($table, $old_field, $new_field) {
 		if (!self::field_exists($table, $old_field)) trigger_error('old field doesn\'t exist');
 		if  (self::field_exists($table, $new_field)) trigger_error('new field already exists');
-		self::$schema[$table] = array(); //force a schema update
-		trigger_error('this function not finished yet');
+		self::refresh($table);
 		return self::query('ALTER  ' . $table . ' CHANGE ' . $old_field . ' ' . $new_field . ' ' . self::field_type($old_field));
 	}
 
@@ -181,7 +191,7 @@ class db {
 	  *
 	  */
 	public static function field_type($table, $field) {
-		trigger_error('this function not finished yet');
+		trigger_error('db::field_type not finished yet');
 	}
 
 	/**
@@ -355,7 +365,7 @@ class db {
 	  * @param	array	$bindings	Optional value bindings for your query
 	  * @return	array				An array of results
 	  */
-	public static function query($sql, $bindings=null) {
+	private static function query($sql, $bindings=null) {
 		self::connect();
 
 		$result = self::$connection->prepare($sql);
@@ -447,6 +457,7 @@ class db {
 
 	/**
 	  * Create an empty table with the given name
+	  * Todo make metadata fields optional, maybe have optional $fields parameter for additional fields
 	  * @param	string		$table	Name of table to create
 	  *
 	  */
@@ -501,11 +512,11 @@ class db {
 	  * @param	array	$fields		Associative array of fields to update
 	  * @return	int					Number of records affected
 	  */
-    public function update($updates, $auto_meta=true) {
+    public function update($updates, $silently=false) {
 		if (empty($this->table)) trigger_error('db::update() must come after a db::table() statement');
 
     	//add metadata automatically, if fields are present
-    	if ($auto_meta) {
+    	if (!$silently) {
 			if (!isset($updates['updated']) && self::field_exists($this->table, 'updated')) $updates['updated'] = self::now();
 			if (!isset($updates['updater']) && self::field_exists($this->table, 'updater')) $updates['updater'] = http::user();
     	}
