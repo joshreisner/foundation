@@ -223,6 +223,16 @@ class html {
 	}
 
 	/**
+	  * Favicon
+	  *
+	  * @param	string	$href		URL
+	  * @return	string				The favicon tag
+	  */
+	static function favicon($href='/assets/img/triangle.png') {
+		return self::tag('link', array('rel'=>'shortcut icon', 'href'=>$href));
+	}
+
+	/**
 	  * Special <form> container tag.  
 	  *
 	  * @param	mixed	$content	Content may be an array
@@ -372,6 +382,7 @@ class html {
 
 	/**
 	  * Special <img> function.  Tries to get height & width if not specified
+	  * Todo finish
 	  *
 	  * @param	string	$filename	The filename of the image
 	  * @return	string				The IMG tag
