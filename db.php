@@ -376,10 +376,15 @@ class db {
 	
 	/**
 	  * Refresh the schema
+	  * @param	string	$table	Optionally only destroy one table from the schema
 	  *
 	  */
-	public static function refresh() {
-		self::$schema = false;
+	public static function refresh($table=false) {
+		if ($table) {
+			self::$schema[$table] = array();
+		} else {
+			self::$schema = false;
+		}
 	}
 	
 	/**
@@ -439,6 +444,25 @@ class db {
 		$return->table = $table;
 		return $return;
     }
+
+	/**
+	  * Create an empty table with the given name
+	  * @param	string		$table	Name of table to create
+	  *
+	  */
+	public static function table_create($table) {
+		if (self::table_exists($table)) trigger_error('Table ' . $table . ' already exists!');
+		//todo make programmatically
+		self::query('CREATE TABLE `' . $table . '` (
+			`id` int NOT NULL AUTO_INCREMENT,
+			`updated` datetime NOT NULL,
+			`updater` int,
+			`precedence` int NOT NULL,
+			`active` tinyint NOT NULL,
+			PRIMARY KEY (`id`)
+		);');
+		self::$schema[$table] = array();
+	}
 
 	/**
 	  * Tell whether a given $table exists or not
