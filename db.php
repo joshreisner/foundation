@@ -147,6 +147,19 @@ class db {
 	}
 
 	/**
+	  * Add a field to a table
+	  *
+	  * @return	string
+	  */
+	public static function field_add($table, $field, $properties) {
+		if (!self::table_exists($table)) trigger_error('db::field_add called for non-existent table ' . $table);
+		if (self::field_exists($table, $field)) trigger_error('db::field_add called for field (' . $table . '.' . $field . ') that already exists');
+		$sql = 'ALTER TABLE `' . $table . '` ADD COLUMN `' . $field . '` ' . self::field_properties($properties);
+		//die($sql);
+		return self::query($sql);
+	}
+
+	/**
 	  * Tell whether a given $field in a $table exists or not
 	  * @param	string		$table	Table name to check
 	  * @param	string		$field	Field name to check
@@ -171,6 +184,37 @@ class db {
 	}
 
 	/**
+	  * Return SQL properties
+	  * @param	string		$table	Table name to check
+	  * @param	string		$table	Field name to check
+	  * @return	bool				True or false if exists
+	  *
+	  */
+	public static function field_properties($properties) {
+		//ALTER TABLE contacts ADD email VARCHAR(60);
+		//ALTER TABLE contacts ADD COLUMN complete DECIMAL(2,1) NULL
+		if (empty($properties['type'])) trigger_error('db::field_properties needs a field type to be set');
+
+		$return = strtoupper($properties['type']);
+
+		switch ($return) {
+			case 'VARCHAR':
+			$properties['length'] = (empty($properties['length'])) ? 255 : $properties['length'];
+			$return = ' ' . $return . '(' . $properties['length'] . ')';
+			break;
+
+			default:
+			trigger_error('db::field_properties not yet programmed for ' . $properties['type']);
+		}
+
+		if (isset($properties['not_null']) && $properties['not_null']) {
+			$return .= ' NOT NULL';
+		}
+
+		return $return;
+	}
+
+	/**
 	  * Rename a field
 	  * @param	string		$table	Table name to check
 	  * @return	bool				True or false if exists
@@ -181,17 +225,6 @@ class db {
 		if  (self::field_exists($table, $new_field)) trigger_error('new field already exists');
 		self::refresh($table);
 		return self::query('ALTER  ' . $table . ' CHANGE ' . $old_field . ' ' . $new_field . ' ' . self::field_type($old_field));
-	}
-
-	/**
-	  * Return SQL type for given field
-	  * @param	string		$table	Table name to check
-	  * @param	string		$table	Field name to check
-	  * @return	bool				True or false if exists
-	  *
-	  */
-	public static function field_type($table, $field) {
-		trigger_error('db::field_type not finished yet');
 	}
 
 	/**
