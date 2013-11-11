@@ -70,7 +70,7 @@ class db {
 				config::get('db.user'), 
 				config::get('db.password'), 
 				array(
-					PDO::ATTR_ERRMODE				=>PDO::ERRMODE_WARNING,
+					PDO::ATTR_ERRMODE				=>PDO::ERRMODE_SILENT,
 					PDO::MYSQL_ATTR_INIT_COMMAND	=>'SET NAMES ' . self::charset(),
 					PDO::ATTR_PERSISTENT			=>true,
 				)
@@ -413,7 +413,7 @@ class db {
 		}
 
 		//fail
-		$error = self::$connection->errorInfo();
+		$error = $result->errorInfo();
 		trigger_error($error[2] . html::pre($sql));
 	}
 	

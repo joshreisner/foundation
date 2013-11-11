@@ -210,7 +210,7 @@ class html {
 					return $return . '</table>';
 				} else {
 					foreach ($var as &$value) $value = self::dump($value);
-					return self::ol($var);
+					return self::ol($var, array('start'=>0));
 				}
 			} elseif (is_object($var)) {
 				return 'object' . self::dump(a::object($var));
