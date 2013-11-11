@@ -148,6 +148,9 @@ class db {
 
 	/**
 	  * Add a field to a table
+	  * @param	string		$table		Table name
+	  * @param	string		$field		Field name
+	  * @param	array		$properties	Array of properties, must have type key
 	  *
 	  * @return	string
 	  */
@@ -155,14 +158,26 @@ class db {
 		if (!self::table_exists($table)) trigger_error('db::field_add called for non-existent table ' . $table);
 		if (self::field_exists($table, $field)) trigger_error('db::field_add called for field (' . $table . '.' . $field . ') that already exists');
 		$sql = 'ALTER TABLE `' . $table . '` ADD COLUMN `' . $field . '` ' . self::field_properties($properties);
-		//die($sql);
+		self::refresh($table);
 		return self::query($sql);
 	}
 
 	/**
+	  * remove a field from a table
+	  * @param	string		$table	Table name 
+	  * @param	string		$field	Field name
+	  *
+	  * @return	string
+	  */
+	public static function field_drop($table, $field) {
+		self::refresh($table);
+		return self::query('ALTER TABLE ' . $table . ' DROP COLUMN ' . $field);
+	}
+
+	/**
 	  * Tell whether a given $field in a $table exists or not
-	  * @param	string		$table	Table name to check
-	  * @param	string		$field	Field name to check
+	  * @param	string		$table	Table name
+	  * @param	string		$field	Field name
 	  * @return	bool				True or false if exists
 	  *
 	  */
@@ -190,7 +205,7 @@ class db {
 	  * @return	bool				True or false if exists
 	  *
 	  */
-	public static function field_properties($properties) {
+	private static function field_properties($properties) {
 		//ALTER TABLE contacts ADD email VARCHAR(60);
 		//ALTER TABLE contacts ADD COLUMN complete DECIMAL(2,1) NULL
 		if (empty($properties['type'])) trigger_error('db::field_properties needs a field type to be set');
@@ -422,7 +437,7 @@ class db {
 	  * @param	string	$table	Optionally only destroy one table from the schema
 	  *
 	  */
-	public static function refresh($table=false) {
+	private static function refresh($table=false) {
 		if ($table) {
 			self::$schema[$table] = array();
 		} else {
