@@ -9,7 +9,6 @@
  * @package Foundation
  */
 
-
 class file {
 
 	public static function dir($path, $types=false) {
