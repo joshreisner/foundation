@@ -159,6 +159,7 @@ class db {
 		if (self::field_exists($table, $field)) trigger_error('db::field_add called for field (' . $table . '.' . $field . ') that already exists');
 		$sql = 'ALTER TABLE `' . $table . '` ADD COLUMN `' . $field . '` ' . self::field_properties($properties);
 		self::refresh($table);
+		self::fields_reorder($table);
 		return self::query($sql);
 	}
 
@@ -213,6 +214,13 @@ class db {
 		$return = strtoupper($properties['type']);
 
 		switch ($return) {
+			case 'DATE':
+			case 'DATETIME':
+			case 'TEXT':
+			case 'TIME':
+			$return = ' ' . $return;
+			break;
+
 			case 'VARCHAR':
 			$properties['length'] = (empty($properties['length'])) ? 255 : $properties['length'];
 			$return = ' ' . $return . '(' . $properties['length'] . ')';
@@ -265,6 +273,32 @@ class db {
 			);
 		}
 		return array_keys(self::$schema[$table]);
+	}
+
+	/**
+	  * Reorder a table's fields so the system fields are in the right places.
+	  * Todo: make system fields configurable
+	  * @param	string		$table	Table name to reorder
+	  *
+	  */
+	public static function fields_reorder($table) {
+		//determine what the last non-system column was
+		$fields = self::fields($table);
+		$last = false;
+		foreach ($fields as $field) {
+			if (!in_array($field, array('id', 'updated', 'updater', 'precedence', 'active'))) {
+				$last = $field;
+			}
+		}
+
+		//if there are non-system columns, reorder
+		if ($last) {
+			self::query('ALTER TABLE ' . $table . ' MODIFY COLUMN id INT NOT NULL AUTO_INCREMENT FIRST');
+			self::query('ALTER TABLE ' . $table . ' MODIFY COLUMN updated DATETIME AFTER ' . $last);
+			self::query('ALTER TABLE ' . $table . ' MODIFY COLUMN updater INT AFTER updated');
+			self::query('ALTER TABLE ' . $table . ' MODIFY COLUMN precedence INT AFTER updater');
+			self::query('ALTER TABLE ' . $table . ' MODIFY COLUMN active TINYINT AFTER precedence');
+		}
 	}
 
 	/**
