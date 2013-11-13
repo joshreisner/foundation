@@ -200,10 +200,9 @@ class db {
 	}
 
 	/**
-	  * Return SQL properties
-	  * @param	string		$table	Table name to check
-	  * @param	string		$table	Field name to check
-	  * @return	bool				True or false if exists
+	  * Return SQL-formatted string of field properties
+	  * @param	array		$properties	Associative array: type, length, not_null, default, key
+	  * @return	string					SQL-formatted string of field properties
 	  *
 	  */
 	private static function field_properties($properties) {
@@ -265,11 +264,19 @@ class db {
 		//otherwise get fields
 		$result = self::query('SHOW COLUMNS FROM ' . $table);
 		foreach ($result as $field) {
+			//this array structure matches the field_properties array structure
+			$field->Length = false;
+			if ($pos = strpos($field->Type, '(')) {
+				$field->Length = substr($field->Type, $pos + 1, -1);
+				$field->Type = substr($field->Type, 0, $pos);
+			}
 			self::$schema[$table][$field->Field] = array(
-				'type'=>$field->Type, //todo parse parens to new length element, eg int(11)
-				'null'=>($field->Null == 'YES') ? true : false,
+				'type'=>$field->Type,
+				'length'=>$field->Length,
+				'not_null'=>$field->Null == 'YES' ? false : true,
 				'key'=>$field->Key,
 				'default'=>$field->Default,
+				'auto'=>$field->Extra == 'auto_increment' ? true : false,
 			);
 		}
 		return array_keys(self::$schema[$table]);
@@ -278,10 +285,11 @@ class db {
 	/**
 	  * Reorder a table's fields so the system fields are in the right places.
 	  * Todo: make system fields configurable
-	  * @param	string		$table	Table name to reorder
+	  * @param	string		$table			Table name to reorder
+	  * @param	array		$other_fields	Array of field names
 	  *
 	  */
-	public static function fields_reorder($table) {
+	public static function fields_reorder($table, $other_fields=false) {
 		//determine what the last non-system column was
 		$fields = self::fields($table);
 		$last = false;
@@ -299,6 +307,16 @@ class db {
 			self::query('ALTER TABLE ' . $table . ' MODIFY COLUMN precedence INT AFTER updater');
 			self::query('ALTER TABLE ' . $table . ' MODIFY COLUMN active TINYINT AFTER precedence');
 		}
+
+		$last = 'id';
+		if ($other_fields) {
+			foreach ($other_fields as $field) {
+				self::query('ALTER TABLE ' . $table . ' MODIFY COLUMN ' . $field . self::field_properties(self::$schema[$table][$field]) . ' AFTER ' . $last);
+				$last = $field;
+			}
+		}
+
+		self::refresh($table);
 	}
 
 	/**
