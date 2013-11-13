@@ -10,6 +10,7 @@ You can just add it to your project with a `require_once('../foundation/index.ph
 
 However, if you want to get fancy, you can have your site look for Foundation dynamically.  This can be useful if you're dealing with several environments with different places for stuff.
 
+```php
 	<?php
 	
 	foundation();
@@ -22,10 +23,12 @@ However, if you want to get fancy, you can have your site look for Foundation dy
 		}
 		die('Could not find Foundation.');
 	}
+```
 
 ### Config
 There are two basic ways of configuring Foundation.  The first, easiest, most common way is to create a file in your document root called config.php and add some config statements to it.  Foundation will automatically scan for a file at /config.php and include it if it's there.  (Just remember to exclude it from version control!)
 
+```php
 	<?php
 	
 	config::set('mail.from',		'info@example.com');
@@ -40,9 +43,11 @@ There are two basic ways of configuring Foundation.  The first, easiest, most co
 		config::set('db.user',		'LiveDBUser');
 		config::set('db.password',	'Sup3rSm@rtP@$$w0rd!!');
 	}
+```
 	
 If you want to move this file, or if you're just simply opposed to configuration files, then you can also configure Foundation merely by having a $config variable present at the time it's initialized.  In the case of the setup function above, you could call it like this:
 
+```php
 	<?php
 	
 	foundation(array(
@@ -51,10 +56,12 @@ If you want to move this file, or if you're just simply opposed to configuration
 		'db.user'=>'LiveDBUser',
 		'db.password'=>'Sup3rSm@rtP@$$w0rd!!',
 	));
-	
+```
+
 ### Databases
 Foundation comes with a database query builder with Laravel-esque syntax:
 
+```php
 	<?php
 	$pages = db::table('pages')
 		->where('active')
@@ -65,6 +72,7 @@ Foundation comes with a database query builder with Laravel-esque syntax:
 	foreach ($pages as $page) {
 		echo $page->title . ' (' . $page->section . ')';
 	}
+```
 
 ### HTML
 Some HTML-builder functions, will have a form example here soon.
