@@ -115,14 +115,16 @@ class html {
 	
 		//add folders to body class
 		$arguments = self::arguments($arguments);
-		if (!isset($arguments['class'])) $arguments['class'] = '';
+		if (!isset($arguments['class'])) {
+			$arguments['class'] = '';
 		
-		if ($folders = http::request('folders')) {
-			foreach ($folders as $folder) $arguments['class'] .= ' ' . $folder;
-		} else {
-			$arguments['class']	.= ' home';
+			if ($folders = http::request('folders')) {
+				foreach ($folders as $folder) $arguments['class'] .= ' ' . $folder;
+			} else {
+				$arguments['class']	.= ' home';
+			}
 		}
-		
+				
 		return self::tag('body', $arguments, false, true);
 	}
 	
