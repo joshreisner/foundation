@@ -89,9 +89,10 @@ class db {
 	  */
 	public function count() {
 		if (empty($this->table)) trigger_error('db::count() must come after a db::table() statement');
-		$sql = 'SELECT COUNT(*) FROM ' . $this->table;
+		$sql = 'SELECT COUNT(*) AS `count` FROM ' . $this->table;
 		$sql .= self::sql_where($this->wheres);
-		return self::query($sql);
+		$count = self::query($sql);
+		return $count[0]->count;
 	}
 
 	/**
