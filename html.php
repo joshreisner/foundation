@@ -265,8 +265,10 @@ class html {
 			//parse fields
 			$fields = array();
 			foreach ($content as $name=>$field) {
-				if (empty($field['value'])) $field['value'] = false;
-				if (empty($field['options'])) $field['options'] = array();
+				//default field keys
+				if (empty($field['value']))		$field['value'] = false;
+				if (empty($field['options']))	$field['options'] = array();
+				if (empty($field['required']))	$field['required'] = false;
 				$field['class'] = (empty($field['class'])) ? 'form-control' : 'form-control ' . $field['class'];
 				$return = '';
 
@@ -325,6 +327,7 @@ class html {
 						break;
 
 						case 'select':
+						if (!$field['required']) $return .= self::option('', array('selected'=>(($field['value'] == false) ? 'selected' : '')));
 						foreach ($field['options'] as $key=>$value) {
 							$selected = ($key == $field['value']) ? 'selected' : false;
 							$return .= self::option($value, array('value'=>$key, 'selected'=>$selected));
