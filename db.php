@@ -196,7 +196,7 @@ class db {
 	  */
 	public static function field_nullable($table, $field) {
 		if (!self::field_exists($table, $field)) trigger_error('db::field_nullable looking for a non-existent field (' . $field . ') in table ' . $table . '.');
-		return self::$schema[$table][$field]['null'];
+		return !self::$schema[$table][$field]['not_null'];
 	}
 
 	/**
