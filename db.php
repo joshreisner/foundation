@@ -88,7 +88,6 @@ class db {
 	  * 
 	  */
 	public function count() {
-		if (empty($this->table)) trigger_error('db::count() must come after a db::table() statement');
 		$sql = 'SELECT COUNT(*) AS `count` FROM ' . $this->table;
 		$sql .= self::sql_where($this->wheres);
 		$count = self::query($sql);
@@ -111,20 +110,25 @@ class db {
 	  *
 	  */
 	public function delete() {
-		if (empty($this->table)) trigger_error('db::delete() must come after a db::table() statement');
 		$sql = 'DELETE FROM ' . $this->table;
 		$sql .= self::sql_where($this->wheres);
 		self::query($sql);
 	}
 
 	/**
-	  * Drop a table from the query builder
+	  * Drop a table or field (column) using the query builder
 	  *
 	  */
 	public function drop() {
-		if (empty($this->table)) trigger_error('db::drop() must come after a db::table() statement');
-		self::query('DROP TABLE IF EXISTS ' . $this->table);
-		$this->table = false;
+		if (empty($this->field)) {
+			self::query('DROP TABLE IF EXISTS ' . $this->table);
+			unset($this->table);
+			self::refresh();
+		} else {
+			self::query('ALTER TABLE ' . $this->table . ' DROP COLUMN ' . $this->field);
+			unset($this->field);
+			self::refresh($this->table);
+		}
 	}
 
 	/**
@@ -138,46 +142,37 @@ class db {
 	}
 	
 	/**
-	  * Format field name for non-ambiguity
-	  *
+	  * Add a field to the query builder, create if does not exist
+	  * 
+	  * @param  string 		$field 		This should be a valid field name.  As a shortcut, it can be table.field
+	  * @param  array 		$properties Array of properties if field should be created
 	  * @return	string
 	  */
-	private static function field($field, $table) {
-		if (!strstr($field, '.')) $field = $table . '.' . $field;
-		return $field;
+	private function field($field, $properties=false) {
+
+		if (strstr($field, '.')) {
+			list($table, $field) = explode('.', $field);
+			$return = self::table($table);
+			return $return->field($field, $properties);
+		}
+
+		if (self::field_exists($this->table, $field)) {
+			if (!$properties) {
+				trigger_error('db::field() looked for ' . $this->table . '.' . $field . ' but it does not exist and properties are not set.');
+			} else {
+				self::query('ALTER TABLE `' . $this->table . '` ADD COLUMN `' . $field . '` ' . self::field_properties($properties));
+				self::refresh($this->table);
+				self::fields_reorder($this->table);
+			}
+		}
+
+		$this->field = $field;
+
+		return $this;
 	}
 
 	/**
-	  * Add a field to a table
-	  * @param	string		$table		Table name
-	  * @param	string		$field		Field name
-	  * @param	array		$properties	Array of properties, must have type key
-	  *
-	  * @return	string
-	  */
-	public static function field_add($table, $field, $properties) {
-		if (!self::table_exists($table)) trigger_error('db::field_add called for non-existent table ' . $table);
-		if (self::field_exists($table, $field)) trigger_error('db::field_add called for field (' . $table . '.' . $field . ') that already exists');
-		$sql = 'ALTER TABLE `' . $table . '` ADD COLUMN `' . $field . '` ' . self::field_properties($properties);
-		self::refresh($table);
-		self::fields_reorder($table);
-		return self::query($sql);
-	}
-
-	/**
-	  * remove a field from a table
-	  * @param	string		$table	Table name 
-	  * @param	string		$field	Field name
-	  *
-	  * @return	string
-	  */
-	public static function field_drop($table, $field) {
-		self::refresh($table);
-		return self::query('ALTER TABLE ' . $table . ' DROP COLUMN ' . $field);
-	}
-
-	/**
-	  * Tell whether a given $field in a $table exists or not
+	  * Silently check whether a given $field in a $table exists or not
 	  * @param	string		$table	Table name
 	  * @param	string		$field	Field name
 	  * @return	bool				True or false if exists
@@ -186,6 +181,18 @@ class db {
 	public static function field_exists($table, $field) {
 		if (!self::table_exists($table)) return false;
 		return in_array($field, self::fields($table));
+	}
+
+	/**
+	  * Format field name in dot-notation for specificity
+	  * @param	string		$field	Field name (this can be table.name)
+	  * @param	string		$table	Table name (table default for prepending)
+	  *
+	  * @return	string
+	  */
+	private static function field_name($field, $table) {
+		if (!strstr($field, '.')) $field = $table . '.' . $field;
+		return $field;
 	}
 
 	/**
@@ -235,19 +242,6 @@ class db {
 		}
 
 		return $return;
-	}
-
-	/**
-	  * Rename a field
-	  * @param	string		$table	Table name to check
-	  * @return	bool				True or false if exists
-	  *
-	  */
-	public static function field_rename($table, $old_field, $new_field) {
-		if (!self::field_exists($table, $old_field)) trigger_error('old field doesn\'t exist');
-		if  (self::field_exists($table, $new_field)) trigger_error('new field already exists');
-		self::refresh($table);
-		return self::query('ALTER  ' . $table . ' CHANGE ' . $old_field . ' ' . $new_field . ' ' . self::field_type($old_field));
 	}
 
 	/**
@@ -327,8 +321,6 @@ class db {
 	  * @return	object			Passing the object up the chain
 	  */
 	public function find($id) {
-		if (empty($this->table)) trigger_error('db::find() must come after a db::table() statement');
-
 		self::where('id', $id);
 		return $this;
 	}
@@ -354,7 +346,6 @@ class db {
 	  * @return	mixed				Returns an object-resultset or null
 	  */
 	public function insert($inserts) {
-		if (empty($this->table)) trigger_error('db::insert() must come after a db::table() statement');
 		$fields = $values = array();
 
 		//add metadata automatically
@@ -452,9 +443,8 @@ class db {
 	  * @return	object				Passing the object up the chain
 	  */
 	public function order_by($fields) {
-		if (empty($this->table)) trigger_error('db::order_by() must come after a db::table() statement');
 		if (!is_array($fields)) $fields = a::separated($fields);
-		foreach ($fields as &$field) $field = self::field($field, $this->table);
+		foreach ($fields as &$field) $field = self::field_name($field, $this->table);
 		$this->order_by = array_merge($this->order_by, $fields);
 		return $this;
 	}
@@ -497,18 +487,26 @@ class db {
 			self::$schema = false;
 		}
 	}
-	
+
 	/**
-	  * Rename a table in the query builder
+	  * Rename a table or field/column using the query builder
 	  *
-	  * @param	string	$new_name	What to rename the table to
+	  * @param	string	$name		What to rename the table or field/column to
 	  * @return	object				Passing the object up the chain
 	  */
-	public function rename($new_name) {
-		if (empty($this->table)) trigger_error('db::rename() must come after a db::table() statement');
-		if (self::table_exists($this->table)) self::query('RENAME TABLE ' . $this->table . ' TO ' . $new_name);
-		//todo check if new table exists and if so, rename new_name to
-		self::table($new_name);
+	public function rename($name) {
+		if (empty($this->field)) {
+			//rename table, update schema & query builder
+			self::query('RENAME TABLE ' . $this->table . ' TO ' . $name);
+			self::refresh();
+			self::table($name);
+		} else {
+			//rename field, update schema & query builder
+			self::query('ALTER  ' . $this->table . ' CHANGE ' . $this->field . ' ' . $name . ' ' . self::field_properties($this->field));
+			self::refresh($this->table);
+			self::field($name);
+		}
+
 		return $this;
 	}
 
@@ -516,6 +514,7 @@ class db {
 	  * Specify which fields to select using query builder
 	  *
 	  * @param	string	$selects	Any number of field names
+	  * @param	array				db::query resultset
 	  */
 	public function select() {
 		$fields = a::arguments(func_get_args());
@@ -524,7 +523,7 @@ class db {
 		if (!isset($this) || !is_object($this)) trigger_error('db::select must be called in object context, eg $result = db::table(\'tablename\')->select()');
 
 		//build query
-		foreach ($fields as &$field) $field = TAB . self::field($field, $this->table);
+		foreach ($fields as &$field) $field = TAB . self::field_name($field, $this->table);
 		$sql = 'SELECT ' . NEWLINE . implode(',' . NEWLINE, $fields) . NEWLINE . 'FROM' . NEWLINE . TAB . $this->table;
 		if (!empty($this->joins)) $sql .= NEWLINE . implode(NEWLINE, $this->joins);
 		$sql .= self::sql_where($this->wheres);
@@ -541,40 +540,31 @@ class db {
 	  */
 	private static function sql_where($wheres) {
 		if (!empty($wheres)) return NEWLINE . 'WHERE ' . implode($wheres);
+		return '';
 	}
 	
 	/**
-	  * Start a new query builder by specifying the table
+	  * Start a new query builder by specifying the table, create if it does not exist
 	  *
 	  * @param	string	$table		The table in question
 	  * @return	object				A query builder object to attach stuff to
 	  */
     public static function table($table) {
-    	//todo decide on whether to check if exists, what to do if not
+    	if (!self::table_exists($table)) {
+			self::query('CREATE TABLE `' . $table . '` (
+				`id` int NOT NULL AUTO_INCREMENT,
+				`updated` datetime NOT NULL,
+				`updater` int,
+				`precedence` int NOT NULL,
+				`active` tinyint NOT NULL,
+				PRIMARY KEY (`id`)
+			);');
+			self::$schema[$table] = array();
+    	}
 		$return = new self;
 		$return->table = $table;
 		return $return;
     }
-
-	/**
-	  * Create an empty table with the given name
-	  * Todo make metadata fields optional, maybe have optional $fields parameter for additional fields
-	  * @param	string		$table	Name of table to create
-	  *
-	  */
-	public static function table_create($table) {
-		if (self::table_exists($table)) trigger_error('Table ' . $table . ' already exists!');
-		//todo make programmatically
-		self::query('CREATE TABLE `' . $table . '` (
-			`id` int NOT NULL AUTO_INCREMENT,
-			`updated` datetime NOT NULL,
-			`updater` int,
-			`precedence` int NOT NULL,
-			`active` tinyint NOT NULL,
-			PRIMARY KEY (`id`)
-		);');
-		self::$schema[$table] = array();
-	}
 
 	/**
 	  * Tell whether a given $table exists or not
@@ -614,15 +604,12 @@ class db {
 	  * @return	int					Number of records affected
 	  */
     public function update($updates, $silently=false) {
-		if (empty($this->table)) trigger_error('db::update() must come after a db::table() statement');
 
     	//add metadata automatically, if fields are present
     	if (!$silently) {
 			if (!isset($updates['updated']) && self::field_exists($this->table, 'updated')) $updates['updated'] = self::now();
 			if (!isset($updates['updater']) && self::field_exists($this->table, 'updater')) $updates['updater'] = http::user();
     	}
-
-		//die(html::dump(self::fields($this->table)));
 
 		//loop through updates and format
 		$fields = array();
@@ -665,7 +652,7 @@ class db {
 			$value = self::escape($value);
 		}
 
-		$this->wheres[] = NEWLINE . TAB . (count($this->wheres) ? ' ' . $logical . ' ' : '') . self::field($field, $this->table) . ' ' . $operator . ' ' . $value;
+		$this->wheres[] = NEWLINE . TAB . (count($this->wheres) ? ' ' . $logical . ' ' : '') . self::field_name($field, $this->table) . ' ' . $operator . ' ' . $value;
 		
 		return $this;
 	}
