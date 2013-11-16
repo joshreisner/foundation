@@ -148,7 +148,7 @@ class db {
 	  * @param  array 		$properties Array of properties if field should be created
 	  * @return	string
 	  */
-	private function field($field, $properties=false) {
+	public function field($field, $properties=false) {
 
 		if (strstr($field, '.')) {
 			list($table, $field) = explode('.', $field);
@@ -156,7 +156,7 @@ class db {
 			return $return->field($field, $properties);
 		}
 
-		if (self::field_exists($this->table, $field)) {
+		if (!self::field_exists($this->table, $field)) {
 			if (!$properties) {
 				trigger_error('db::field() looked for ' . $this->table . '.' . $field . ' but it does not exist and properties are not set.');
 			} else {

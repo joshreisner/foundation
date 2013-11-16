@@ -298,15 +298,20 @@ class html {
 						}
 						break;
 
+						case 'date':
+						$field_args = array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>'mm/dd/yyyy');
+						$return = self::input('date', $name, $field_args);
+						break;
+
+						case 'datetime':
+						$field_args = array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>'mm/dd/yyyy');
+						$return = self::input('datetime', $name, $field_args);
+						break;
+
 						case 'email':
 						$field_args = array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>strip_tags($field['label']));
 						if (!empty($field['autocomplete'])) $field_args['autocomplete'] = $field['autocomplete'];
 						$return = self::input('email', $name, $field_args);
-						break;
-
-						case 'date':
-						$field_args = array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>'mm/dd/yyyy');
-						$return = self::input('date', $name, $field_args);
 						break;
 
 						case 'file':
