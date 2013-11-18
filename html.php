@@ -317,7 +317,7 @@ class html {
 						case 'image':
 							$return = self::span(
 						        self::icon('file') . 
-						        ' Select file&hellip;' .
+						        ' Select Image&hellip;' .
 						        self::input('file', $name, 'upload')
 							, 'btn btn-default fileinput-button');
 						break;
