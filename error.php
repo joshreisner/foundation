@@ -35,6 +35,7 @@ class error {
 		//simple format for ajax requests
 		if (http::ajax()) return 'Error ' . $type . ': ' . strip_tags($message);
 		
+		//return some html
 		return html::start() . 
 			html::head(html::title($type)) . 
 			html::body_open(array('style'=>'height:100%;margin:0;')) . 
@@ -112,6 +113,7 @@ class error {
 		
 		//output error to screen if allowed (or if it's a joshlib startup error)
 		if (!class_exists('config') || config::get('error.display')) {
+			http::status(500);
 			echo self::display($title, $message, $file, $line);
 			exit;
 		}

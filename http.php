@@ -248,7 +248,7 @@ class http {
 	  *
 	  * @param	int	$code		code to throw, eg 404 or 200
 	  */
-	public function status($code) {
+	public static function status($code) {
 
 		switch ($code) {
 			case 100: $text = 'Continue'; break;

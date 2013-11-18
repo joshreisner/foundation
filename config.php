@@ -12,6 +12,9 @@
 class config {
 
 	private static $defaults = array(
+		'aws.bucket'		=> false,
+		'aws.key'			=> false,
+		'aws.secret'		=> false,
 		'charset'			=> 'utf-8',
 		'config.file'		=> 'config.php',
 		'css.shortcuts'		=> array('bootstrap'=>'//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css'),
@@ -44,7 +47,7 @@ class config {
 	  * @return	mixed				The value of the config variable
 	  */
 	static function get($key, $required=false) {
-		if (!isset(self::$defaults[$key]) && $required) trigger_error('config::get() missing a required value for ' . html::strong($key) . '.  Please add this to your config file.');
+		if (empty(self::$defaults[$key]) && $required) trigger_error('config::get() missing a required value for ' . html::strong($key) . '.  Please add this to your config file.');
 		return @self::$defaults[$key];
 	}
 	

@@ -315,11 +315,10 @@ class html {
 						break;
 
 						case 'image':
-							$return = self::span(
-						        self::icon('file') . 
-						        ' Select Image&hellip;' .
-						        self::input('file', $name, 'upload')
-							, 'btn btn-default fileinput-button');
+						$return = self::span(self::icon('file') . ' Select Image&hellip;', array(
+							'class'=>'btn btn-default fileupload',
+							'data-bucket'=>config::get('aws.bucket', true)
+						));
 						break;
 
 						case 'file':
