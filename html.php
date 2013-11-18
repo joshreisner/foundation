@@ -314,6 +314,14 @@ class html {
 						$return = self::input('email', $name, $field_args);
 						break;
 
+						case 'image':
+							$return = self::span(
+						        self::icon('file') . 
+						        ' Select file&hellip;' .
+						        self::input('file', $name, 'upload')
+							, 'btn btn-default fileinput-button');
+						break;
+
 						case 'file':
 						$return = self::input('file', $name);
 						break;
@@ -412,7 +420,15 @@ class html {
 	  */
 	static function img($filename, $arguments=false) {
 		$arguments = self::arguments($arguments);
-		
+
+		//compute size
+		if (empty($arguments['width']) || empty($arguments['height'])) {
+
+		}
+
+		$arguments['src'] = $filename;
+		unset($arguments['maxwidth'], $arguments['maxheight']);
+		return self::tag('img', $arguments);
 	}
 
 	/**
