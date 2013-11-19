@@ -315,9 +315,16 @@ class html {
 						break;
 
 						case 'image':
-						$return = self::span(self::icon('file') . ' Select Image&hellip;', array(
-							'class'=>'btn btn-default fileupload',
-							'data-bucket'=>config::get('aws.bucket', true)
+						if (!isset($field['width'])) $field['width'] = '';
+						if (!isset($field['height'])) $field['height'] = '';
+						if (!isset($field['maxwidth'])) $field['maxwidth'] = '';
+						if (!isset($field['maxheight'])) $field['maxheight'] = '';
+						$return = self::input('file', $name, array(
+							'class'=>'upload-image',
+							'data-width'=>$field['width'],
+							'data-height'=>$field['height'],
+							'data-maxwidth'=>$field['maxwidth'],
+							'data-maxheight'=>$field['maxheight'],
 						));
 						break;
 
