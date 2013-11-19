@@ -24,23 +24,6 @@ class http {
 	}
 
 	/**
-	  * Send a content-type header
-	  *
-	  * @param	string 	$type		The content type to send
-	  */
-	static function content_type($type) {
-		$types = array(
-			'html'	=> 'text/html',
-			'xml'	=> 'application/xml',
-		);
-
-		if (!isset($types[$type])) error_handle('content::type called for unhandled type ' . $type);
-
-		if (!headers_sent()) header('Content-type: ' . $types[$type] . '; charset=' . config::get('charset', true));
-	}
-
-
-	/**
 	  * Get or set a cookie
 	  *
 	  * @param	string	$key	The name of the cookie
@@ -297,6 +280,23 @@ class http {
 		$protocol = (isset($_SERVER['SERVER_PROTOCOL']) ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.0');
 
 		if (!headers_sent()) header($protocol . ' ' . $code . ' ' . $text);
+	}
+
+	/**
+	  * Send a content-type header
+	  *
+	  * @param	string 	$type		The content type to send
+	  */
+	static function type($type) {
+		$types = array(
+			'html'	=> 'text/html',
+			'json'	=> 'application/json',
+			'xml'	=> 'application/xml',
+		);
+
+		if (!isset($types[$type])) error_handle('content::type called for unhandled type ' . $type);
+
+		if (!headers_sent()) header('Content-type: ' . $types[$type] . '; charset=' . config::get('charset', true));
 	}
 
 	/**
