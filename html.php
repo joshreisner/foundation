@@ -274,115 +274,121 @@ class html {
 				$field['class'] = (empty($field['class'])) ? 'form-control' : 'form-control ' . $field['class'];
 				$return = '';
 
-				if ($field['type'] == 'checkbox') {
-					//bootrap packages single checkbox fields differently
-					$checked = ($field['value']) ? 'checked' : false;
-					$return = self::div('col-lg-offset-2 col-lg-10', 
-						self::div('checkbox',
-							self::label(
-								self::input('checkbox', $name, array('checked'=>$checked)) . 
-								$field['label']
-							)
-						)
-					);
+				if ($field['type'] == 'hidden') {
+					$fields[] = self::input('hidden', $name, array('value'=>$field['value']));
 				} else {
-					switch ($field['type']) {
-						case 'checkboxes':
-						if (!$field['value']) $field['value'] = array();
-						foreach ($field['options'] as $key=>$option) {
-							$checked = in_array($key, $field['value']) ? 'checked' : false;
-							$return .= self::div('checkbox', self::label(
-								html::input('checkbox', $name, array('value'=>$key, 'checked'=>$checked))
-							    . $option
+					if ($field['type'] == 'checkbox') {
+						//bootrap packages single checkbox fields differently
+						$checked = ($field['value']) ? 'checked' : false;
+						$return = self::div('col-lg-offset-2 col-lg-10', 
+							self::div('checkbox',
+								self::label(
+									self::input('checkbox', $name, array('checked'=>$checked)) . 
+									$field['label']
+								)
+							)
+						);
+					} else {
+						switch ($field['type']) {
+							case 'checkboxes':
+							if (!$field['value']) $field['value'] = array();
+							foreach ($field['options'] as $key=>$option) {
+								$checked = in_array($key, $field['value']) ? 'checked' : false;
+								$return .= self::div('checkbox', self::label(
+									html::input('checkbox', $name, array('value'=>$key, 'checked'=>$checked))
+								    . $option
+								));
+							}
+							break;
+
+							case 'date':
+							$field_args = array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>'mm/dd/yyyy');
+							$return = self::input('date', $name, $field_args);
+							break;
+
+							case 'datetime':
+							$field_args = array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>'mm/dd/yyyy');
+							$return = self::input('datetime', $name, $field_args);
+							break;
+
+							case 'email':
+							$field_args = array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>strip_tags($field['label']));
+							if (!empty($field['autocomplete'])) $field_args['autocomplete'] = $field['autocomplete'];
+							$return = self::input('email', $name, $field_args);
+							break;
+
+							case 'image':
+							if (!isset($field['data-id'])) $field['data-id'] = '';
+							if (!isset($field['data-width'])) $field['data-width'] = '';
+							if (!isset($field['data-height'])) $field['data-height'] = '';
+							if (!isset($field['data-maxwidth'])) $field['data-maxwidth'] = '';
+							if (!isset($field['data-maxheight'])) $field['data-maxheight'] = '';
+							$return = self::input('file', $name, array(
+								'class'=>'upload-image',
+								'data-id'=>$field['data-id'],
+								'data-width'=>$field['data-width'],
+								'data-height'=>$field['data-height'],
+								'data-maxwidth'=>$field['data-maxwidth'],
+								'data-maxheight'=>$field['data-maxheight'],
 							));
+							break;
+
+							case 'file':
+							$return = self::input('file', $name);
+							break;
+
+							case 'password':
+							$field_args = array('class'=>$field['class'], 'placeholder'=>$field['label']);
+							if (!empty($field['autocomplete'])) $field_args['autocomplete'] = $field['autocomplete'];
+							$return = self::input('password', $name, $field_args);
+							break;
+
+							case 'radio':
+							foreach ($field['options'] as $key=>$value) {
+								$checked = ($key == $field['value']) ? 'checked' : false;
+								$return .= self::div('radio', self::label(
+									self::input('radio', $name, array('value'=>$key, 'checked'=>$checked)) . $value
+								));
+							}
+							break;
+
+							case 'select':
+							if (!$field['required']) $return .= self::option('', array('selected'=>(($field['value'] == false) ? 'selected' : '')));
+							foreach ($field['options'] as $key=>$value) {
+								$selected = ($key == $field['value']) ? 'selected' : false;
+								$return .= self::option($value, array('value'=>$key, 'selected'=>$selected));
+							}
+							$return = self::select($return, array('name'=>$name, 'class'=>$field['class']));
+							break;
+
+							case 'text':
+							$return = self::input('text', $name, array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>strip_tags($field['label'])));
+							break;
+
+							case 'textarea':
+							$return = self::textarea($field['value'], array('name'=>$name, 'class'=>$field['class'], 'placeholder'=>strip_tags($field['label'])));
+							break;
+
+							case 'time':
+							$return = self::input('time', $name, array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>'--:-- --'));
+							break;
+
+							case 'url':
+							case 'url-local':
+							$return = self::input('text', $name, array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>strip_tags($field['label'])));
+							break;
+
+							default:
+							trigger_error('self::form doesn\'t yet support ' . $field['type']);
 						}
-						break;
 
-						case 'date':
-						$field_args = array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>'mm/dd/yyyy');
-						$return = self::input('date', $name, $field_args);
-						break;
+						$return = self::label($field['label'], array('for'=>$name, 'class'=>'col-lg-2 control-label')) . 
+							self::div('col-lg-10', $return);
 
-						case 'datetime':
-						$field_args = array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>'mm/dd/yyyy');
-						$return = self::input('datetime', $name, $field_args);
-						break;
-
-						case 'email':
-						$field_args = array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>strip_tags($field['label']));
-						if (!empty($field['autocomplete'])) $field_args['autocomplete'] = $field['autocomplete'];
-						$return = self::input('email', $name, $field_args);
-						break;
-
-						case 'image':
-						if (!isset($field['width'])) $field['width'] = '';
-						if (!isset($field['height'])) $field['height'] = '';
-						if (!isset($field['maxwidth'])) $field['maxwidth'] = '';
-						if (!isset($field['maxheight'])) $field['maxheight'] = '';
-						$return = self::input('file', $name, array(
-							'class'=>'upload-image',
-							'data-width'=>$field['width'],
-							'data-height'=>$field['height'],
-							'data-maxwidth'=>$field['maxwidth'],
-							'data-maxheight'=>$field['maxheight'],
-						));
-						break;
-
-						case 'file':
-						$return = self::input('file', $name);
-						break;
-
-						case 'password':
-						$field_args = array('class'=>$field['class'], 'placeholder'=>$field['label']);
-						if (!empty($field['autocomplete'])) $field_args['autocomplete'] = $field['autocomplete'];
-						$return = self::input('password', $name, $field_args);
-						break;
-
-						case 'radio':
-						foreach ($field['options'] as $key=>$value) {
-							$checked = ($key == $field['value']) ? 'checked' : false;
-							$return .= self::div('radio', self::label(
-								self::input('radio', $name, array('value'=>$key, 'checked'=>$checked)) . $value
-							));
-						}
-						break;
-
-						case 'select':
-						if (!$field['required']) $return .= self::option('', array('selected'=>(($field['value'] == false) ? 'selected' : '')));
-						foreach ($field['options'] as $key=>$value) {
-							$selected = ($key == $field['value']) ? 'selected' : false;
-							$return .= self::option($value, array('value'=>$key, 'selected'=>$selected));
-						}
-						$return = self::select($return, array('name'=>$name, 'class'=>$field['class']));
-						break;
-
-						case 'text':
-						$return = self::input('text', $name, array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>strip_tags($field['label'])));
-						break;
-
-						case 'textarea':
-						$return = self::textarea($field['value'], array('name'=>$name, 'class'=>$field['class'], 'placeholder'=>strip_tags($field['label'])));
-						break;
-
-						case 'time':
-						$return = self::input('time', $name, array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>'--:-- --'));
-						break;
-
-						case 'url':
-						case 'url-local':
-						$return = self::input('text', $name, array('value'=>$field['value'], 'class'=>$field['class'], 'placeholder'=>strip_tags($field['label'])));
-						break;
-
-						default:
-						trigger_error('self::form doesn\'t yet support ' . $field['type']);
 					}
-
-					$return = self::label($field['label'], array('for'=>$name, 'class'=>'col-lg-2 control-label')) . 
-						self::div('col-lg-10', $return);
-
+					
+					$fields[] = self::div('form-group', $return);
 				}
-				
-				$fields[] = self::div('form-group', $return);
 			}
 
 			$content = implode($fields);
